@@ -16,10 +16,20 @@ if cur ~= tonumber(ARGV[1]) then return {0, cur} end
 redis.call('SET', KEYS[1], ARGV[2])
 return {1, redis.call('INCR', KEYS[2])}`;
 
+// Integrasi Upstash di Vercel bisa memberi prefix apa saja (KV_, STORAGE_, dll.),
+// jadi cari pasangan *_REST_API_URL / *_REST_API_TOKEN dengan prefix bebas.
+function findVar(suffixes) {
+  for (const s of suffixes) {
+    if (process.env[s]) return process.env[s];
+    const k = Object.keys(process.env).find((name) => name.endsWith('_' + s) && process.env[name]);
+    if (k) return process.env[k];
+  }
+}
+
 function env() {
   return {
-    url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN,
+    url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || findVar(['REST_API_URL', 'REDIS_REST_URL']),
+    token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || findVar(['REST_API_TOKEN', 'REDIS_REST_TOKEN']),
     pin: process.env.WARUNG_PIN,
   };
 }
