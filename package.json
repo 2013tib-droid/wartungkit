@@ -1,0 +1,6 @@
+{
+  "name": "warung-kantor",
+  "private": true,
+  "type": "module",
+  "description": "Dashboard penjualan & arus kas warung kantor"
+}

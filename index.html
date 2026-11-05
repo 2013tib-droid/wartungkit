@@ -74,7 +74,7 @@ input[type=number]{width:100%}
 </head>
 <body>
 <header><div class="wrap">
-  <div class="top"><h1>🏪 Warung Kantor</h1><span class="note" id="saldoTop"></span></div>
+  <div class="top"><h1>🏪 Warung Kantor</h1><div style="text-align:right"><div class="note" id="saldoTop"></div><div class="note" id="syncStat" style="font-size:12px"></div></div></div>
   <nav id="nav">
     <button data-t="dash" class="on">Dashboard</button>
     <button data-t="jual">Jual</button>
@@ -184,14 +184,24 @@ input[type=number]{width:100%}
 
 <!-- DATA -->
 <section id="data">
+  <div class="card" style="margin-bottom:12px">
+    <h2>☁️ Sinkron online (HP & laptop)</h2>
+    <p class="note" id="syncHelp"></p>
+    <div class="row">
+      <input type="password" id="pinIn" placeholder="PIN warung" autocomplete="current-password" style="width:180px">
+      <button class="btn p" id="pinSave">Sambungkan</button>
+      <button class="btn" id="syncBtn">Sinkron sekarang</button>
+      <button class="btn" id="pinOut">Putuskan</button>
+    </div>
+  </div>
   <div class="card">
     <h2>Cadangan data</h2>
-    <p class="note">Data tersimpan di browser ini saja. Rutin unduh cadangan supaya aman, dan pakai file itu untuk pindah ke HP / laptop lain.</p>
+    <p class="note">Tetap unduh cadangan sesekali supaya aman, walaupun sinkron online sudah aktif.</p>
     <div class="row">
       <button class="btn p" id="exp">Unduh cadangan (.json)</button>
       <label class="btn">Pulihkan dari file<input type="file" id="imp" accept=".json" hidden></label>
       <button class="btn" id="expCsv">Unduh penjualan (.csv)</button>
-      <button class="btn" id="reset" style="color:var(--out)">Hapus semua data</button>
+      <button class="btn" id="reset" style="color:var(--out)">Hapus semua transaksi</button>
     </div>
   </div>
 </section>
@@ -220,9 +230,11 @@ const fmtDate=s=>parse(s).toLocaleDateString('id-ID',{weekday:'short',day:'numer
 const monday=d=>{const x=new Date(d);const k=(x.getDay()+6)%7;x.setDate(x.getDate()-k);x.setHours(0,0,0,0);return x};
 
 let S=load();
-function blank(){return{products:DEFAULT_PRODUCTS.map(([name,price])=>({id:uid(),name,price,active:true})),purchases:[],sales:[],cash:[],adjust:[]}}
+function blank(){return{products:DEFAULT_PRODUCTS.map(([name,price],i)=>({id:'p'+(i+1),name,price,active:true})),purchases:[],sales:[],cash:[],adjust:[],deleted:{}}}
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.products)return Object.assign(blank(),s)}catch(e){}return blank()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Gagal menyimpan ke browser')}render()}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Gagal menyimpan ke browser')}}
+function save(){persist();sync.dirty=true;sync.seq=(sync.seq||0)+1;saveSync();render();schedulePush()}
+function tomb(id){S.deleted=S.deleted||{};S.deleted[id]=1}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1800)}
 const prod=id=>S.products.find(p=>p.id===id)||{name:'(produk dihapus)',price:0};
 
@@ -361,7 +373,7 @@ $('#cartClear').onclick=()=>{cart={};renderJual()};
 $('#cartSave').onclick=()=>{const date=$('#jDate').value||today();const ids=Object.keys(cart);if(!ids.length)return toast('Keranjang masih kosong');
   for(const id of ids)S.sales.push({id:uid(),date,pid:id,qty:cart[id],price:prod(id).price});
   const n=ids.reduce((x,id)=>x+cart[id],0);cart={};save();toast(n+' pcs tersimpan')};
-$('#salesList').onclick=e=>{const id=e.target.dataset.delSale;if(id&&confirm('Hapus baris penjualan ini?')){S.sales=S.sales.filter(s=>s.id!==id);save()}};
+$('#salesList').onclick=e=>{const id=e.target.dataset.delSale;if(id&&confirm('Hapus baris penjualan ini?')){tomb(id);S.sales=S.sales.filter(s=>s.id!==id);save()}};
 
 /* ---------- belanja ---------- */
 function prodOptions(sel){return S.products.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc(p.name)}</option>`).join('')}
@@ -379,7 +391,7 @@ $('#bSave').onclick=()=>{const items=readBuy().filter(i=>i.qty>0).map(({pid,qty,
   $('#bItems').innerHTML='';$('#bNote').value='';['#bShip','#bFee','#bDisc'].forEach(s=>$(s).value=0);addBuyRow();save();toast('Belanja tersimpan, stok bertambah')};
 function renderBeli(){const list=[...S.purchases].sort((a,b)=>b.date.localeCompare(a.date));
   $('#buyList').innerHTML=list.length?`<table><tr><th>Tanggal</th><th>Isi</th><th class="r">Total</th><th></th></tr>${list.map(b=>`<tr><td><b>${fmtDate(b.date)}</b>${b.note?`<div class="note">${esc(b.note)}</div>`:''}</td><td class="note">${b.items.map(i=>esc(prod(i.pid).name)+' ×'+i.qty).join(', ')}</td><td class="r">${rp(purchaseTotal(b))}</td><td class="r"><button class="btn x" data-del-buy="${b.id}">✕</button></td></tr>`).join('')}</table>`:'<div class="empty">Belum ada belanja</div>'}
-$('#buyList').onclick=e=>{const id=e.target.dataset.delBuy;if(id&&confirm('Hapus catatan belanja ini? Stok akan berkurang.')){S.purchases=S.purchases.filter(b=>b.id!==id);save()}};
+$('#buyList').onclick=e=>{const id=e.target.dataset.delBuy;if(id&&confirm('Hapus catatan belanja ini? Stok akan berkurang.')){tomb(id);S.purchases=S.purchases.filter(b=>b.id!==id);save()}};
 
 /* ---------- kas ---------- */
 function fillCats(){$('#kCat').innerHTML=CATS[$('#kType').value].map(c=>`<option>${c}</option>`).join('')}
@@ -396,7 +408,7 @@ function renderKas(){const L=ledgerAll();const f=$('#kFilter').value;
   const rows=L.filter(r=>f==='all'||r.type===f).reverse();
   $('#ledger').innerHTML=rows.length?`<table><tr><th>Tanggal</th><th>Kategori</th><th>Keterangan</th><th class="r">Masuk</th><th class="r">Keluar</th><th class="r">Saldo</th><th></th></tr>${rows.map(r=>`<tr><td>${fmtDate(r.date)}</td><td>${esc(r.cat)}</td><td class="note">${esc(r.note)}</td><td class="r in">${r.type==='in'?rp(r.amt):''}</td><td class="r out">${r.type==='out'?rp(r.amt):''}</td><td class="r">${rp(r.bal)}</td><td>${r.id?`<button class="btn x" data-del-cash="${r.id}">✕</button>`:''}</td></tr>`).join('')}</table>`:'<div class="empty">Belum ada transaksi. Mulai dengan catat “Modal awal”.</div>';
 }
-$('#ledger').onclick=e=>{const id=e.target.dataset.delCash;if(id&&confirm('Hapus transaksi ini?')){S.cash=S.cash.filter(c=>c.id!==id);save()}};
+$('#ledger').onclick=e=>{const id=e.target.dataset.delCash;if(id&&confirm('Hapus transaksi ini?')){tomb(id);S.cash=S.cash.filter(c=>c.id!==id);save()}};
 
 /* ---------- stok ---------- */
 function renderStok(){const cs=costStats();
@@ -414,7 +426,7 @@ function download(name,text,type){const a=document.createElement('a');a.href=URL
 $('#exp').onclick=()=>download('warung-kantor-'+today()+'.json',JSON.stringify(S,null,1),'application/json');
 $('#expCsv').onclick=()=>download('penjualan-'+today()+'.csv','tanggal,produk,qty,harga,jumlah\n'+S.sales.map(s=>[s.date,'"'+prod(s.pid).name.replace(/"/g,'""')+'"',s.qty,s.price,s.qty*s.price].join(',')).join('\n'),'text/csv');
 $('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.products)throw 0;if(confirm('Ganti semua data dengan isi file ini?')){S=Object.assign(blank(),d);save();toast('Data dipulihkan')}}catch(x){toast('File tidak valid')}};r.readAsText(f);e.target.value=''};
-$('#reset').onclick=()=>{if(confirm('Yakin hapus SEMUA data? Unduh cadangan dulu kalau ragu.')&&confirm('Sekali lagi: hapus semua?')){S=blank();save()}};
+$('#reset').onclick=()=>{if(confirm('Yakin hapus SEMUA transaksi (penjualan, belanja, kas, opname)? Daftar produk tetap. Unduh cadangan dulu kalau ragu.')&&confirm('Sekali lagi: hapus semua transaksi?')){for(const k of TX)for(const x of S[k])tomb(x.id);for(const k of TX)S[k]=[];save()}};
 
 /* ---------- render ---------- */
 function render(){
@@ -425,7 +437,74 @@ function render(){
 ['#jDate','#bDate','#kDate'].forEach(s=>$(s).value=today());
 fillCats();addBuyRow();
 try{const t=localStorage.getItem(KEY+'.tab');if(t&&$('#'+t))document.querySelector(`#nav [data-t="${t}"]`).click()}catch(e){}
+
+/* ---------- sinkron online ---------- */
+const TX=['purchases','sales','cash','adjust'];
+function hasTx(d){return TX.some(k=>(d[k]||[]).length)}
+function norm(d){return Object.assign(blank(),d,{deleted:Object.assign({},d.deleted)})}
+function merge(a,b){ // gabung by id; b menang kalau id sama; yang dihapus (tombstone) dibuang
+  a=norm(a);b=norm(b);const del=Object.assign({},a.deleted,b.deleted);const out={deleted:del};
+  for(const k of ['products',...TX]){const m=new Map();for(const x of a[k])m.set(x.id,x);for(const x of b[k])m.set(x.id,x);out[k]=[...m.values()].filter(x=>!del[x.id])}
+  return out;
+}
+const SK=KEY+'.sync';
+let sync=loadSync();
+function loadSync(){const d={pin:'',rev:0,dirty:false,seq:0};try{return Object.assign(d,JSON.parse(localStorage.getItem(SK)))}catch(e){return d}}
+function saveSync(){try{localStorage.setItem(SK,JSON.stringify(sync))}catch(e){}}
+const online=()=>/^https?:$/.test(location.protocol);
+const canSync=()=>online()&&!!sync.pin;
+function setStatus(t,c){const el=$('#syncStat');el.textContent=t;el.className='note '+(c||'')}
+async function api(method,body){
+  const r=await fetch('api/data',{method,cache:'no-store',headers:{'content-type':'application/json','x-pin':sync.pin},body:body?JSON.stringify(body):undefined});
+  let j={};try{j=await r.json()}catch(e){}
+  return Object.assign({status:r.status},j);
+}
+let busy=false,again=false,pushT;
+function schedulePush(){if(!canSync())return;setStatus('● menyimpan…','muted');clearTimeout(pushT);pushT=setTimeout(syncNow,800)}
+async function syncNow(){
+  if(!canSync())return;
+  if(busy){again=true;return}
+  busy=true;
+  try{
+    const r=await api('GET');
+    if(r.status===401){setStatus('⚠ PIN salah','out');return}
+    if(r.status!==200)throw new Error(r.error||'HTTP '+r.status);
+    if(r.data&&r.rev!==sync.rev){
+      if(!hasTx(S)&&!sync.rev){S=norm(r.data);sync.dirty=false} // perangkat baru: ambil data online
+      else S=sync.dirty?merge(r.data,S):merge(S,r.data);
+      sync.rev=r.rev;persist();render();
+    }
+    if(sync.dirty||!r.data){
+      for(let i=0;i<4;i++){
+        const sent=sync.seq;const p=await api('PUT',{data:S,base:sync.rev});
+        if(p.status===200){sync.rev=p.rev;if(sync.seq===sent)sync.dirty=false;break}
+        if(p.status===409){S=merge(p.data||blank(),S);sync.rev=p.rev;persist();render();continue}
+        throw new Error(p.error||'HTTP '+p.status);
+      }
+    }
+    setStatus(sync.dirty?'● menyimpan…':'☁ tersinkron '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),sync.dirty?'muted':'in');
+  }catch(e){setStatus('⚠ offline — tersimpan di perangkat ini','out')}
+  finally{saveSync();busy=false;if(again){again=false;syncNow()}}
+}
+function renderSyncUI(){
+  $('#syncHelp').innerHTML=!online()
+    ?'Sinkron hanya jalan kalau aplikasi dibuka dari alamat online (mis. <b>nama-warung.vercel.app</b>), bukan dari file di perangkat.'
+    :sync.pin?'Tersambung. Setiap perubahan otomatis tersimpan online dan muncul di perangkat lain dalam ±20 detik.'
+    :'Masukkan PIN yang kamu set di Vercel (WARUNG_PIN). Lakukan di HP dan di laptop dengan PIN yang sama.';
+  $('#pinIn').style.display=$('#pinSave').style.display=sync.pin?'none':'';
+  $('#syncBtn').style.display=$('#pinOut').style.display=sync.pin?'':'none';
+  if(!canSync())setStatus(online()?'○ belum tersambung':'','muted');
+}
+$('#pinSave').onclick=async()=>{const pin=$('#pinIn').value.trim();if(!pin)return;sync.pin=pin;saveSync();renderSyncUI();await syncNow();
+  if($('#syncStat').textContent.includes('PIN salah')){sync.pin='';saveSync();renderSyncUI();toast('PIN salah')}else{$('#pinIn').value='';toast('Tersambung ☁');renderSyncUI()}};
+$('#syncBtn').onclick=()=>syncNow();
+$('#pinOut').onclick=()=>{if(confirm('Putuskan sinkron di perangkat ini? Data di perangkat tetap ada.')){sync.pin='';saveSync();renderSyncUI()}};
+setInterval(()=>{if(document.visibilityState==='visible')syncNow()},20000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow()});
+window.addEventListener('online',()=>syncNow());
+renderSyncUI();
 render();
+syncNow();
 </script>
 </body>
 </html>
