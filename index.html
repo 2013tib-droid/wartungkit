@@ -521,7 +521,7 @@ async function syncNow(){
       }
     }
     setStatus(sync.dirty?'● menyimpan…':'☁ tersinkron '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),sync.dirty?'muted':'in');
-  }catch(e){setStatus('⚠ offline — tersimpan di perangkat ini','out')}
+  }catch(e){const m=String(e&&e.message||'');setStatus(navigator.onLine&&m&&!/fetch|network/i.test(m)?'⚠ gagal sinkron: '+m:'⚠ offline — tersimpan di perangkat ini','out')}
   finally{saveSync();busy=false;if(again){again=false;syncNow()}}
 }
 function renderSyncUI(){
