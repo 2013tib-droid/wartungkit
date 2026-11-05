@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Warung Kantor</title>
+<style>
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#1d2330;--muted:#6b7280;--line:#e5e7eb;
+  --brand:#0f766e;--brand-soft:#ccfbf1;--in:#15803d;--out:#b91c1c;--warn:#b45309;--warn-soft:#fef3c7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1115;--card:#181b22;--text:#e5e7eb;--muted:#9ca3af;--line:#2a2f3a;
+    --brand:#2dd4bf;--brand-soft:#134e4a;--in:#4ade80;--out:#f87171;--warn:#fbbf24;--warn-soft:#422006;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--card:#181b22;--text:#e5e7eb;--muted:#9ca3af;--line:#2a2f3a;
+  --brand:#2dd4bf;--brand-soft:#134e4a;--in:#4ade80;--out:#f87171;--warn:#fbbf24;--warn-soft:#422006;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 6px}
+h1{font-size:18px;margin:0}
+nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px}
+nav button{border:0;background:none;color:var(--muted);padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--brand-soft);color:var(--brand);font-weight:600}
+main{padding:16px 0 60px}
+section{display:none}section.on{display:block}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h2{font-size:15px;margin:0 0 10px}
+.kpi .l{color:var(--muted);font-size:13px}.kpi .v{font-size:22px;font-weight:700;margin-top:2px}
+.kpi .s{color:var(--muted);font-size:12px;margin-top:2px}
+.in{color:var(--in)}.out{color:var(--out)}.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+td.r,th.r{text-align:right}
+.tbl{overflow-x:auto}
+input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
+input[type=number]{width:100%}
+.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn.p{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+:root[data-theme="dark"] .btn.p{color:#04201d}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.p{color:#04201d}}
+.btn.x{border:0;background:none;color:var(--muted);padding:4px 8px}
+.btn.x:hover{color:var(--out)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);color:var(--muted);padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:var(--brand);color:#fff}
+.prods{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.prod{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:10px;text-align:left;cursor:pointer;font:inherit;position:relative}
+.prod:active{transform:scale(.98)}
+.prod .n{font-size:13px;font-weight:600;line-height:1.25}
+.prod .p{font-size:13px;color:var(--brand);margin-top:4px}
+.prod .st{font-size:11px;color:var(--muted)}
+.prod .q{position:absolute;top:-6px;right:-6px;background:var(--brand);color:#fff;border-radius:99px;min-width:22px;height:22px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-weight:600}
+.chart{min-height:240px}
+.empty{color:var(--muted);text-align:center;padding:20px}
+.note{font-size:13px;color:var(--muted)}
+.total{font-size:18px;font-weight:700}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;z-index:10}
+.toast.on{opacity:1}
+@media (max-width:600px){.kpi .v{font-size:19px}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="top"><h1>🏪 Warung Kantor</h1><span class="note" id="saldoTop"></span></div>
+  <nav id="nav">
+    <button data-t="dash" class="on">Dashboard</button>
+    <button data-t="jual">Jual</button>
+    <button data-t="beli">Belanja Shopee</button>
+    <button data-t="kas">Arus Kas</button>
+    <button data-t="stok">Produk & Stok</button>
+    <button data-t="data">Data</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+<!-- DASHBOARD -->
+<section id="dash" class="on">
+  <div class="row" style="justify-content:space-between;margin-bottom:12px">
+    <div class="seg" id="period">
+      <button data-p="week" class="on">Minggu ini</button>
+      <button data-p="lastweek">Minggu lalu</button>
+      <button data-p="month">Bulan ini</button>
+      <button data-p="all">Semua</button>
+    </div>
+    <span class="note" id="periodLabel"></span>
+  </div>
+  <div class="grid kpis" id="kpis"></div>
+  <div class="grid two" style="margin-top:12px">
+    <div class="card"><h2>Penjualan harian</h2><div class="chart"><div id="cDaily"></div></div></div>
+    <div class="card"><h2>Kas masuk vs keluar per minggu</h2><div class="chart"><div id="cWeekly"></div></div></div>
+  </div>
+  <div class="grid two" style="margin-top:12px">
+    <div class="card"><h2>Produk terlaris</h2><div class="tbl" id="topProds"></div></div>
+    <div class="card"><h2>Perlu restock</h2><div class="tbl" id="lowStock"></div></div>
+  </div>
+</section>
+
+<!-- JUAL -->
+<section id="jual">
+  <div class="card" style="margin-bottom:12px">
+    <div class="row" style="justify-content:space-between">
+      <div class="row"><label>Tanggal <input type="date" id="jDate"></label></div>
+      <div class="row"><span class="muted">Total:</span><span class="total" id="cartTotal">Rp0</span>
+        <button class="btn" id="cartClear">Kosongkan</button><button class="btn p" id="cartSave">Simpan penjualan</button></div>
+    </div>
+    <div class="note" style="margin-top:6px">Ketuk produk untuk menambah. Ketuk lama / klik kanan untuk mengurangi.</div>
+  </div>
+  <div class="prods" id="prodGrid"></div>
+  <div class="card" style="margin-top:12px"><h2>Riwayat penjualan</h2><div class="tbl" id="salesList"></div></div>
+</section>
+
+<!-- BELANJA -->
+<section id="beli">
+  <div class="card">
+    <h2>Catat belanja (pesanan Shopee)</h2>
+    <div class="row" style="margin-bottom:10px">
+      <label>Tanggal <input type="date" id="bDate"></label>
+      <input id="bNote" placeholder="Catatan (mis. no. pesanan)" style="flex:1;min-width:180px">
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Produk</th><th class="r" style="width:90px">Qty (pcs)</th><th class="r" style="width:140px">Subtotal (Rp)</th><th class="r" style="width:100px">Modal/pcs</th><th></th></tr></thead>
+      <tbody id="bItems"></tbody>
+    </table></div>
+    <div class="row" style="margin:10px 0"><button class="btn" id="bAdd">+ Tambah baris</button></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+      <label>Ongkir (Rp)<br><input type="number" id="bShip" min="0" value="0"></label>
+      <label>Biaya layanan (Rp)<br><input type="number" id="bFee" min="0" value="0"></label>
+      <label>Diskon / voucher (Rp)<br><input type="number" id="bDisc" min="0" value="0"></label>
+    </div>
+    <div class="row" style="justify-content:space-between;margin-top:12px">
+      <span>Total dibayar: <span class="total" id="bTotal">Rp0</span></span>
+      <button class="btn p" id="bSave">Simpan belanja</button>
+    </div>
+    <p class="note">Ongkir, biaya layanan dan diskon dibagi rata ke modal per pcs sesuai porsi subtotal, jadi laba yang dihitung sudah bersih.</p>
+  </div>
+  <div class="card" style="margin-top:12px"><h2>Riwayat belanja</h2><div class="tbl" id="buyList"></div></div>
+</section>
+
+<!-- KAS -->
+<section id="kas">
+  <div class="card">
+    <h2>Catat kas lain-lain</h2>
+    <div class="row">
+      <input type="date" id="kDate">
+      <select id="kType"><option value="in">Masuk</option><option value="out">Keluar</option></select>
+      <select id="kCat"></select>
+      <input type="number" id="kAmt" placeholder="Jumlah (Rp)" min="0" style="width:140px">
+      <input id="kNote" placeholder="Keterangan" style="flex:1;min-width:140px">
+      <button class="btn p" id="kSave">Simpan</button>
+    </div>
+    <p class="note">Penjualan & belanja Shopee otomatis masuk ke arus kas. Di sini untuk modal awal, tambah modal, ambil uang (prive), plastik, dll.</p>
+  </div>
+  <div class="grid kpis" id="kasKpis" style="margin-top:12px"></div>
+  <div class="card" style="margin-top:12px">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">Buku kas</h2>
+      <select id="kFilter"><option value="all">Semua</option><option value="in">Masuk</option><option value="out">Keluar</option></select></div>
+    <div class="tbl" id="ledger"></div>
+  </div>
+</section>
+
+<!-- STOK -->
+<section id="stok">
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">Produk & stok</h2>
+      <div class="row"><input id="npName" placeholder="Nama produk baru"><input type="number" id="npPrice" placeholder="Harga jual" style="width:120px"><button class="btn p" id="npAdd">Tambah</button></div></div>
+    <div class="tbl" id="prodTable"></div>
+    <p class="note">Stok = total dibeli − terjual + penyesuaian. Klik “Opname” kalau hitungan fisik beda (hilang/rusak/dimakan sendiri 😄).</p>
+  </div>
+</section>
+
+<!-- DATA -->
+<section id="data">
+  <div class="card">
+    <h2>Cadangan data</h2>
+    <p class="note">Data tersimpan di browser ini saja. Rutin unduh cadangan supaya aman, dan pakai file itu untuk pindah ke HP / laptop lain.</p>
+    <div class="row">
+      <button class="btn p" id="exp">Unduh cadangan (.json)</button>
+      <label class="btn">Pulihkan dari file<input type="file" id="imp" accept=".json" hidden></label>
+      <button class="btn" id="expCsv">Unduh penjualan (.csv)</button>
+      <button class="btn" id="reset" style="color:var(--out)">Hapus semua data</button>
+    </div>
+  </div>
+</section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='warungKantor.v1';
+const DEFAULT_PRODUCTS=[
+ ['Better Sandwich Original',2000],['Delfi Chacha Coklat',1250],['Gery Salut Wafer Choco',750],
+ ['Kacang Sukro Dua Kelinci',1250],['Kuku Bima',1500],['Mayora Mini Astor Wafer Rolls',2250],
+ ['Mie Gelas',1250],['Mie Gemez Enak',1250],['Mie Kremez Shorr Ayam Panggang',1000],['Momogi',1250],
+ ['Nabati Wafer',1000],['Oishi Pillow',1250],['Pop Mie',6000],['Roma Malkist',1250],
+ ['Roma Sari Gandum Sandwich Coklat',2500],['Saltcheese',1250],['Sedaap Cup',6000],
+ ['Superstar Triple Chocolate',1000],['Ultra Milk 125 ml',4000]];
+const CATS={in:['Modal awal','Tambah modal','Lain-lain'],out:['Ambil uang (prive)','Plastik / kemasan','Lain-lain']};
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const $=s=>document.querySelector(s);
+const rp=n=>'Rp'+Math.round(n||0).toLocaleString('id-ID');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today=()=>ymd(new Date());
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const fmtDate=s=>parse(s).toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'});
+const monday=d=>{const x=new Date(d);const k=(x.getDay()+6)%7;x.setDate(x.getDate()-k);x.setHours(0,0,0,0);return x};
+
+let S=load();
+function blank(){return{products:DEFAULT_PRODUCTS.map(([name,price])=>({id:uid(),name,price,active:true})),purchases:[],sales:[],cash:[],adjust:[]}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.products)return Object.assign(blank(),s)}catch(e){}return blank()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Gagal menyimpan ke browser')}render()}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1800)}
+const prod=id=>S.products.find(p=>p.id===id)||{name:'(produk dihapus)',price:0};
+
+/* ---------- derived ---------- */
+function purchaseTotal(b){const sub=b.items.reduce((a,i)=>a+(+i.cost||0),0);return sub+(+b.ship||0)+(+b.fee||0)-(+b.disc||0)}
+function costStats(){ // average landed cost per product
+  const m={};
+  for(const b of S.purchases){
+    const sub=b.items.reduce((a,i)=>a+(+i.cost||0),0);const tot=purchaseTotal(b);const f=sub>0?tot/sub:1;
+    for(const i of b.items){const r=m[i.pid]||(m[i.pid]={qty:0,cost:0});r.qty+=+i.qty||0;r.cost+=(+i.cost||0)*f}
+  }
+  return m;
+}
+function stockOf(pid,cs){
+  const bought=(cs[pid]||{qty:0}).qty;
+  const sold=S.sales.filter(s=>s.pid===pid).reduce((a,s)=>a+s.qty,0);
+  const adj=S.adjust.filter(a=>a.pid===pid).reduce((a,x)=>a+x.qty,0);
+  return{bought,sold,adj,stock:bought-sold+adj};
+}
+function avgCost(pid,cs){const r=cs[pid];return r&&r.qty?r.cost/r.qty:null}
+function ledgerAll(){
+  const L=[];
+  const byDay={};
+  for(const s of S.sales){(byDay[s.date]=byDay[s.date]||{amt:0,qty:0});byDay[s.date].amt+=s.qty*s.price;byDay[s.date].qty+=s.qty}
+  for(const d in byDay)L.push({date:d,type:'in',cat:'Penjualan',note:byDay[d].qty+' pcs terjual',amt:byDay[d].amt,auto:true});
+  for(const b of S.purchases)L.push({date:b.date,type:'out',cat:'Belanja Shopee',note:b.note||(b.items.length+' produk'),amt:purchaseTotal(b),auto:true});
+  for(const c of S.cash)L.push({id:c.id,date:c.date,type:c.type,cat:c.cat,note:c.note,amt:+c.amt});
+  L.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.type==='in'?-1:1));
+  let bal=0;for(const r of L){bal+=r.type==='in'?r.amt:-r.amt;r.bal=bal}
+  return L;
+}
+
+/* ---------- nav ---------- */
+$('#nav').onclick=e=>{const t=e.target.dataset.t;if(!t)return;
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.querySelectorAll('main section').forEach(s=>s.classList.toggle('on',s.id===t));
+  try{localStorage.setItem(KEY+'.tab',t)}catch(e){}
+  render();window.scrollTo(0,0)};
+
+/* ---------- dashboard ---------- */
+let period='week';
+$('#period').onclick=e=>{const p=e.target.dataset.p;if(!p)return;period=p;
+  document.querySelectorAll('#period button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));renderDash()};
+function range(){
+  const now=new Date();let a,b=new Date(now);
+  if(period==='week'){a=monday(now)}
+  else if(period==='lastweek'){a=monday(now);a.setDate(a.getDate()-7);b=new Date(a);b.setDate(b.getDate()+6)}
+  else if(period==='month'){a=new Date(now.getFullYear(),now.getMonth(),1)}
+  else{const ds=[...S.sales.map(s=>s.date),...S.purchases.map(p=>p.date),...S.cash.map(c=>c.date)].sort();a=ds.length?parse(ds[0]):new Date(now)}
+  return[ymd(a),ymd(b)];
+}
+function renderDash(){
+  const[a,b]=range();const inR=d=>d>=a&&d<=b;
+  $('#periodLabel').textContent=fmtDate(a)+' – '+fmtDate(b);
+  const cs=costStats();
+  const sales=S.sales.filter(s=>inR(s.date));
+  const omzet=sales.reduce((x,s)=>x+s.qty*s.price,0);
+  const pcs=sales.reduce((x,s)=>x+s.qty,0);
+  let hpp=0,noCost=0;for(const s of sales){const c=avgCost(s.pid,cs);if(c==null)noCost+=s.qty;else hpp+=c*s.qty}
+  const laba=omzet-hpp;
+  const L=ledgerAll();const lr=L.filter(r=>inR(r.date));
+  const cin=lr.filter(r=>r.type==='in').reduce((x,r)=>x+r.amt,0),cout=lr.filter(r=>r.type==='out').reduce((x,r)=>x+r.amt,0);
+  const saldo=L.length?L[L.length-1].bal:0;
+  let stokVal=0;for(const p of S.products){const st=stockOf(p.id,cs).stock;const c=avgCost(p.id,cs);if(st>0&&c)stokVal+=st*c}
+  const days=Math.max(1,Math.round((parse(b)-parse(a))/864e5)+1);
+  $('#kpis').innerHTML=[
+    ['Omzet',rp(omzet),pcs+' pcs · '+rp(omzet/days)+'/hari'],
+    ['Laba kotor',rp(laba),(omzet?Math.round(laba/omzet*100):0)+'% margin'+(noCost?` · <span class="badge">${noCost} pcs tanpa modal</span>`:'')],
+    ['Kas masuk',`<span class="in">${rp(cin)}</span>`,'penjualan + modal'],
+    ['Kas keluar',`<span class="out">${rp(cout)}</span>`,'belanja + biaya'],
+    ['Saldo kas sekarang',rp(saldo),'uang di tangan'],
+    ['Nilai stok',rp(stokVal),'dihitung dari modal']
+  ].map(([l,v,s])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  // daily chart
+  const dl=[],dv=[],dp=[];const start=parse(a),n=Math.min(days,62);const st0=new Date(parse(b));st0.setDate(st0.getDate()-n+1);
+  for(let i=0;i<n;i++){const d=new Date(st0);d.setDate(d.getDate()+i);const k=ymd(d);const ss=S.sales.filter(s=>s.date===k);
+    dl.push(d.toLocaleDateString('id-ID',{day:'numeric',month:'short'}));dv.push(ss.reduce((x,s)=>x+s.qty*s.price,0));
+    dp.push(ss.reduce((x,s)=>{const c=avgCost(s.pid,cs);return x+(c==null?0:s.qty*(s.price-c))},0))}
+  draw('cDaily','bar',dl,[{label:'Omzet',data:dv,color:'brand'},{label:'Laba',data:dp,color:'in'}]);
+
+  // weekly cash (last 8 weeks)
+  const wl=[],wi=[],wo=[];const m0=monday(new Date());
+  for(let i=7;i>=0;i--){const s=new Date(m0);s.setDate(s.getDate()-7*i);const e=new Date(s);e.setDate(e.getDate()+6);const A=ymd(s),B=ymd(e);
+    const rr=L.filter(r=>r.date>=A&&r.date<=B);wl.push(s.toLocaleDateString('id-ID',{day:'numeric',month:'short'}));
+    wi.push(rr.filter(r=>r.type==='in').reduce((x,r)=>x+r.amt,0));wo.push(rr.filter(r=>r.type==='out').reduce((x,r)=>x+r.amt,0))}
+  draw('cWeekly','bar',wl,[{label:'Masuk',data:wi,color:'in'},{label:'Keluar',data:wo,color:'out'}]);
+
+  // top products
+  const agg={};for(const s of sales){const r=agg[s.pid]||(agg[s.pid]={qty:0,amt:0,laba:0});const c=avgCost(s.pid,cs);r.qty+=s.qty;r.amt+=s.qty*s.price;r.laba+=c==null?0:s.qty*(s.price-c)}
+  const top=Object.entries(agg).sort((x,y)=>y[1].amt-x[1].amt).slice(0,10);
+  $('#topProds').innerHTML=top.length?`<table><tr><th>Produk</th><th class="r">Pcs</th><th class="r">Omzet</th><th class="r">Laba</th></tr>${top.map(([id,r])=>`<tr><td>${esc(prod(id).name)}</td><td class="r">${r.qty}</td><td class="r">${rp(r.amt)}</td><td class="r">${rp(r.laba)}</td></tr>`).join('')}</table>`:'<div class="empty">Belum ada penjualan di periode ini</div>';
+
+  // low stock: weekly velocity from last 28 days
+  const d28=new Date();d28.setDate(d28.getDate()-27);const k28=ymd(d28);
+  const low=S.products.filter(p=>p.active!==false).map(p=>{const st=stockOf(p.id,cs).stock;const sold=S.sales.filter(s=>s.pid===p.id&&s.date>=k28).reduce((x,s)=>x+s.qty,0);const perWeek=sold/4;return{p,st,perWeek,need:Math.max(0,Math.ceil(perWeek*1.2-st))}})
+    .filter(r=>r.st<=Math.max(2,r.perWeek*0.5)).sort((x,y)=>(x.st-y.st)||(y.perWeek-x.perWeek)).slice(0,10);
+  $('#lowStock').innerHTML=low.length?`<table><tr><th>Produk</th><th class="r">Stok</th><th class="r">Laku/minggu</th><th class="r">Saran beli</th></tr>${low.map(r=>`<tr><td>${esc(r.p.name)}</td><td class="r">${r.st<=0?'<span class="badge">Habis</span>':r.st}</td><td class="r">${r.perWeek.toFixed(1)}</td><td class="r">${r.need||'-'}</td></tr>`).join('')}</table>`:'<div class="empty">Stok aman semua 👍</div>';
+}
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim()}
+function draw(id,type,labels,sets){
+  const el=$('#'+id),W=Math.max(280,el.clientWidth||600),H=220,pl=40,pb=22,pt=8;
+  const max=Math.max(1,...sets.flatMap(s=>s.data));const nice=Math.pow(10,Math.floor(Math.log10(max)));const top=Math.ceil(max/nice)*nice;
+  const n=labels.length,gw=(W-pl)/n,bw=Math.min(24,(gw*0.8)/sets.length);
+  const y=v=>pt+(H-pt-pb)*(1-v/top);const k=v=>v>=1e6?(v/1e6).toFixed(1).replace('.0','')+'jt':v>=1000?Math.round(v/1000)+'rb':v;
+  let g='';for(let i=0;i<=4;i++){const v=top*i/4;g+=`<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${k(v)}</text>`}
+  const step=Math.ceil(n/Math.floor(W/56));let bars='',lab='';
+  labels.forEach((l,i)=>{const x0=pl+gw*i+(gw-bw*sets.length)/2;
+    sets.forEach((s,j)=>{const v=s.data[i];const yy=y(v);bars+=`<rect x="${x0+j*bw}" y="${yy}" width="${Math.max(1,bw-2)}" height="${Math.max(0,H-pb-yy)}" rx="3" fill="var(--${s.color})"><title>${l} · ${s.label}: ${rp(v)}</title></rect>`});
+    if(i%step===0)lab+=`<text x="${pl+gw*i+gw/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--muted)">${l}</text>`});
+  const leg=sets.map(s=>`<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px"><i style="width:10px;height:10px;border-radius:2px;background:var(--${s.color})"></i>${s.label}</span>`).join('');
+  el.innerHTML=`<div class="note" style="margin-bottom:4px">${leg}</div><svg width="100%" viewBox="0 0 ${W} ${H}" role="img">${g}${bars}${lab}</svg>`;
+}
+let rsT;window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(render,200)});
+
+/* ---------- jual ---------- */
+let cart={};
+function renderJual(){
+  const cs=costStats();
+  $('#prodGrid').innerHTML=S.products.filter(p=>p.active!==false).map(p=>{const st=stockOf(p.id,cs).stock;
+    return`<button class="prod" data-id="${p.id}">${cart[p.id]?`<span class="q">${cart[p.id]}</span>`:''}<div class="n">${esc(p.name)}</div><div class="p">${rp(p.price)}</div><div class="st">stok ${st}</div></button>`}).join('');
+  $('#cartTotal').textContent=rp(Object.entries(cart).reduce((x,[id,q])=>x+q*prod(id).price,0));
+  const byDay={};for(const s of S.sales)(byDay[s.date]=byDay[s.date]||[]).push(s);
+  const days=Object.keys(byDay).sort().reverse().slice(0,14);
+  $('#salesList').innerHTML=days.length?`<table><tr><th>Tanggal</th><th>Produk</th><th class="r">Qty</th><th class="r">Jumlah</th><th></th></tr>${days.map(d=>{const ss=byDay[d];const tot=ss.reduce((x,s)=>x+s.qty*s.price,0);
+    return ss.map((s,i)=>`<tr><td>${i===0?`<b>${fmtDate(d)}</b><div class="note">${rp(tot)}</div>`:''}</td><td>${esc(prod(s.pid).name)}</td><td class="r">${s.qty}</td><td class="r">${rp(s.qty*s.price)}</td><td class="r"><button class="btn x" data-del-sale="${s.id}" title="Hapus">✕</button></td></tr>`).join('')}).join('')}</table>`:'<div class="empty">Belum ada penjualan</div>';
+}
+function bump(id,d){cart[id]=Math.max(0,(cart[id]||0)+d);if(!cart[id])delete cart[id];renderJual()}
+$('#prodGrid').addEventListener('click',e=>{const b=e.target.closest('.prod');if(b&&!b._long)bump(b.dataset.id,1);if(b)b._long=false});
+$('#prodGrid').addEventListener('contextmenu',e=>{const b=e.target.closest('.prod');if(b){e.preventDefault();bump(b.dataset.id,-1)}});
+let pressT;
+$('#prodGrid').addEventListener('touchstart',e=>{const b=e.target.closest('.prod');if(!b)return;pressT=setTimeout(()=>{b._long=true;bump(b.dataset.id,-1)},550)},{passive:true});
+$('#prodGrid').addEventListener('touchend',()=>clearTimeout(pressT));
+$('#prodGrid').addEventListener('touchmove',()=>clearTimeout(pressT),{passive:true});
+$('#cartClear').onclick=()=>{cart={};renderJual()};
+$('#cartSave').onclick=()=>{const date=$('#jDate').value||today();const ids=Object.keys(cart);if(!ids.length)return toast('Keranjang masih kosong');
+  for(const id of ids)S.sales.push({id:uid(),date,pid:id,qty:cart[id],price:prod(id).price});
+  const n=ids.reduce((x,id)=>x+cart[id],0);cart={};save();toast(n+' pcs tersimpan')};
+$('#salesList').onclick=e=>{const id=e.target.dataset.delSale;if(id&&confirm('Hapus baris penjualan ini?')){S.sales=S.sales.filter(s=>s.id!==id);save()}};
+
+/* ---------- belanja ---------- */
+function prodOptions(sel){return S.products.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc(p.name)}</option>`).join('')}
+function addBuyRow(pid,qty='',cost=''){const tr=document.createElement('tr');
+  tr.innerHTML=`<td><select class="bp" style="width:100%">${prodOptions(pid)}</select></td><td><input type="number" class="bq" min="0" value="${qty}"></td><td><input type="number" class="bc" min="0" value="${cost}"></td><td class="r note bu">-</td><td><button class="btn x" title="Hapus">✕</button></td>`;
+  tr.querySelector('.btn').onclick=()=>{tr.remove();calcBuy()};$('#bItems').appendChild(tr);calcBuy()}
+function readBuy(){return[...$('#bItems').children].map(tr=>({pid:tr.querySelector('.bp').value,qty:+tr.querySelector('.bq').value||0,cost:+tr.querySelector('.bc').value||0,tr}))}
+function calcBuy(){const items=readBuy();const b={items,ship:$('#bShip').value,fee:$('#bFee').value,disc:$('#bDisc').value};const sub=items.reduce((a,i)=>a+i.cost,0);const tot=purchaseTotal(b);const f=sub?tot/sub:1;
+  for(const i of items){const u=i.qty?i.cost*f/i.qty:0;const pr=prod(i.pid).price;i.tr.querySelector('.bu').innerHTML=i.qty&&i.cost?`${rp(u)}<div style="font-size:11px" class="${pr>u?'in':'out'}">untung ${rp(pr-u)}</div>`:'-'}
+  $('#bTotal').textContent=rp(tot)}
+$('#bItems').addEventListener('input',calcBuy);['#bShip','#bFee','#bDisc'].forEach(s=>$(s).oninput=calcBuy);
+$('#bAdd').onclick=()=>addBuyRow();
+$('#bSave').onclick=()=>{const items=readBuy().filter(i=>i.qty>0).map(({pid,qty,cost})=>({pid,qty,cost}));if(!items.length)return toast('Isi minimal satu produk dengan qty');
+  S.purchases.push({id:uid(),date:$('#bDate').value||today(),note:$('#bNote').value.trim(),items,ship:+$('#bShip').value||0,fee:+$('#bFee').value||0,disc:+$('#bDisc').value||0});
+  $('#bItems').innerHTML='';$('#bNote').value='';['#bShip','#bFee','#bDisc'].forEach(s=>$(s).value=0);addBuyRow();save();toast('Belanja tersimpan, stok bertambah')};
+function renderBeli(){const list=[...S.purchases].sort((a,b)=>b.date.localeCompare(a.date));
+  $('#buyList').innerHTML=list.length?`<table><tr><th>Tanggal</th><th>Isi</th><th class="r">Total</th><th></th></tr>${list.map(b=>`<tr><td><b>${fmtDate(b.date)}</b>${b.note?`<div class="note">${esc(b.note)}</div>`:''}</td><td class="note">${b.items.map(i=>esc(prod(i.pid).name)+' ×'+i.qty).join(', ')}</td><td class="r">${rp(purchaseTotal(b))}</td><td class="r"><button class="btn x" data-del-buy="${b.id}">✕</button></td></tr>`).join('')}</table>`:'<div class="empty">Belum ada belanja</div>'}
+$('#buyList').onclick=e=>{const id=e.target.dataset.delBuy;if(id&&confirm('Hapus catatan belanja ini? Stok akan berkurang.')){S.purchases=S.purchases.filter(b=>b.id!==id);save()}};
+
+/* ---------- kas ---------- */
+function fillCats(){$('#kCat').innerHTML=CATS[$('#kType').value].map(c=>`<option>${c}</option>`).join('')}
+$('#kType').onchange=fillCats;
+$('#kSave').onclick=()=>{const amt=+$('#kAmt').value;if(!amt)return toast('Isi jumlahnya');
+  S.cash.push({id:uid(),date:$('#kDate').value||today(),type:$('#kType').value,cat:$('#kCat').value,amt,note:$('#kNote').value.trim()});
+  $('#kAmt').value='';$('#kNote').value='';save();toast('Tersimpan')};
+$('#kFilter').onchange=()=>renderKas();
+function renderKas(){const L=ledgerAll();const f=$('#kFilter').value;
+  const tin=L.filter(r=>r.type==='in').reduce((x,r)=>x+r.amt,0),tout=L.filter(r=>r.type==='out').reduce((x,r)=>x+r.amt,0);
+  const sum=cat=>L.filter(r=>r.cat===cat).reduce((x,r)=>x+r.amt,0);
+  $('#kasKpis').innerHTML=[['Total masuk',`<span class="in">${rp(tin)}</span>`],['Total keluar',`<span class="out">${rp(tout)}</span>`],['Saldo',rp(tin-tout)],['Modal disetor',rp(sum('Modal awal')+sum('Tambah modal'))],['Uang diambil',rp(sum('Ambil uang (prive)'))]]
+    .map(([l,v])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  const rows=L.filter(r=>f==='all'||r.type===f).reverse();
+  $('#ledger').innerHTML=rows.length?`<table><tr><th>Tanggal</th><th>Kategori</th><th>Keterangan</th><th class="r">Masuk</th><th class="r">Keluar</th><th class="r">Saldo</th><th></th></tr>${rows.map(r=>`<tr><td>${fmtDate(r.date)}</td><td>${esc(r.cat)}</td><td class="note">${esc(r.note)}</td><td class="r in">${r.type==='in'?rp(r.amt):''}</td><td class="r out">${r.type==='out'?rp(r.amt):''}</td><td class="r">${rp(r.bal)}</td><td>${r.id?`<button class="btn x" data-del-cash="${r.id}">✕</button>`:''}</td></tr>`).join('')}</table>`:'<div class="empty">Belum ada transaksi. Mulai dengan catat “Modal awal”.</div>';
+}
+$('#ledger').onclick=e=>{const id=e.target.dataset.delCash;if(id&&confirm('Hapus transaksi ini?')){S.cash=S.cash.filter(c=>c.id!==id);save()}};
+
+/* ---------- stok ---------- */
+function renderStok(){const cs=costStats();
+  $('#prodTable').innerHTML=`<table><tr><th>Produk</th><th class="r">Harga jual</th><th class="r">Modal/pcs</th><th class="r">Untung/pcs</th><th class="r">Beli</th><th class="r">Terjual</th><th class="r">Stok</th><th></th></tr>${S.products.map(p=>{const s=stockOf(p.id,cs);const c=avgCost(p.id,cs);
+    return`<tr style="${p.active===false?'opacity:.5':''}"><td>${esc(p.name)}</td><td class="r"><input type="number" value="${p.price}" data-price="${p.id}" style="width:90px;text-align:right"></td><td class="r">${c==null?'<span class="muted">-</span>':rp(c)}</td><td class="r ${c!=null&&p.price<c?'out':''}">${c==null?'-':rp(p.price-c)}</td><td class="r">${s.bought}</td><td class="r">${s.sold}</td><td class="r"><b>${s.stock}</b>${s.adj?`<div class="note">adj ${s.adj>0?'+':''}${s.adj}</div>`:''}</td><td class="r" style="white-space:nowrap"><button class="btn x" data-opname="${p.id}">Opname</button><button class="btn x" data-toggle="${p.id}">${p.active===false?'Aktifkan':'Sembunyikan'}</button></td></tr>`}).join('')}</table>`}
+$('#prodTable').addEventListener('change',e=>{const id=e.target.dataset.price;if(id){prod(id).price=+e.target.value||0;save();toast('Harga diperbarui (berlaku untuk penjualan berikutnya)')}});
+$('#prodTable').addEventListener('click',e=>{const o=e.target.dataset.opname,t=e.target.dataset.toggle;
+  if(o){const cur=stockOf(o,costStats()).stock;const v=prompt('Stok fisik '+prod(o).name+' sekarang berapa?',cur);if(v===null||v==='')return;const d=Math.round(+v)-cur;if(isNaN(d))return;if(d){S.adjust.push({id:uid(),date:today(),pid:o,qty:d});save();toast('Stok disesuaikan '+(d>0?'+':'')+d)}}
+  if(t){const p=prod(t);p.active=p.active===false;save()}});
+$('#npAdd').onclick=()=>{const name=$('#npName').value.trim();if(!name)return;S.products.push({id:uid(),name,price:+$('#npPrice').value||0,active:true});$('#npName').value='';$('#npPrice').value='';save();refreshBuySelects();toast('Produk ditambahkan')};
+function refreshBuySelects(){document.querySelectorAll('#bItems .bp').forEach(s=>{const v=s.value;s.innerHTML=prodOptions(v)})}
+
+/* ---------- data ---------- */
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('#exp').onclick=()=>download('warung-kantor-'+today()+'.json',JSON.stringify(S,null,1),'application/json');
+$('#expCsv').onclick=()=>download('penjualan-'+today()+'.csv','tanggal,produk,qty,harga,jumlah\n'+S.sales.map(s=>[s.date,'"'+prod(s.pid).name.replace(/"/g,'""')+'"',s.qty,s.price,s.qty*s.price].join(',')).join('\n'),'text/csv');
+$('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.products)throw 0;if(confirm('Ganti semua data dengan isi file ini?')){S=Object.assign(blank(),d);save();toast('Data dipulihkan')}}catch(x){toast('File tidak valid')}};r.readAsText(f);e.target.value=''};
+$('#reset').onclick=()=>{if(confirm('Yakin hapus SEMUA data? Unduh cadangan dulu kalau ragu.')&&confirm('Sekali lagi: hapus semua?')){S=blank();save()}};
+
+/* ---------- render ---------- */
+function render(){
+  const L=ledgerAll();$('#saldoTop').textContent='Saldo kas: '+rp(L.length?L[L.length-1].bal:0);
+  const on=document.querySelector('main section.on').id;
+  ({dash:renderDash,jual:renderJual,beli:renderBeli,kas:renderKas,stok:renderStok})[on]?.();
+}
+['#jDate','#bDate','#kDate'].forEach(s=>$(s).value=today());
+fillCats();addBuyRow();
+try{const t=localStorage.getItem(KEY+'.tab');if(t&&$('#'+t))document.querySelector(`#nav [data-t="${t}"]`).click()}catch(e){}
+render();
+</script>
+</body>
+</html>
