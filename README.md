@@ -1,4 +1,4 @@
-# Warung Kantor
+# WartungKit
 
 Dashboard penjualan + arus kas untuk warung camilan kantor. Bisa dipakai offline (buka `index.html`), atau di-online-kan di Vercel supaya HP dan laptop memakai data yang sama.
 
