@@ -14,6 +14,7 @@ Dashboard penjualan + arus kas untuk warung camilan kantor. Bisa dipakai offline
 - Data selalu tersimpan juga di perangkat, jadi tetap bisa mencatat saat sinyal hilang; begitu online lagi otomatis tersinkron.
 - Tetap rutin **Data → Unduh cadangan** sebagai jaga-jaga.
 - Modal per pcs = rata-rata dari semua belanja, sudah termasuk porsi ongkir/biaya dan dikurangi voucher.
+- Biaya OB ambil barang dicatat terpisah: tidak masuk modal per pcs, tapi mengurangi laba kotor menjadi laba bersih (per belanja dan di Dashboard).
 
 ## Online di Vercel (gratis)
 
