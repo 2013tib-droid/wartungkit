@@ -9,6 +9,7 @@ Dashboard penjualan + arus kas untuk warung camilan kantor. Bisa dipakai offline
 4. **Jual** → ketuk produk yang terjual (ketuk lama / klik kanan untuk mengurangi), lalu *Simpan penjualan*. Bisa dicatat per transaksi atau direkap di akhir hari.
 5. **Dashboard** → omzet, laba kotor, kas masuk/keluar, saldo, nilai stok, produk terlaris, dan saran restock untuk belanja minggu depan.
 6. **Produk & Stok** → ubah harga, tambah produk, *Opname* kalau stok fisik beda.
+7. **Harga jual dari GPT** → di Belanja Shopee atau Produk & Stok, buka *Tempel harga jual dari GPT*: klik *Salin daftar untuk GPT*, tempel ke GPT, lalu tempel jawabannya (mis. `Momogi: Rp1.500`, satu produk per baris) dan klik *Isi harga jual* / *Terapkan harga*.
 
 ## Catatan
 - Data selalu tersimpan juga di perangkat, jadi tetap bisa mencatat saat sinyal hilang; begitu online lagi otomatis tersinkron.

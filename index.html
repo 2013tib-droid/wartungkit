@@ -180,6 +180,12 @@ input[type=number]{width:100%}
       <tbody id="bItems"></tbody>
     </table></div>
     <div class="row" style="margin:10px 0"><button class="btn" id="bAdd">+ Tambah baris</button></div>
+    <details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600">Tempel harga jual dari GPT</summary>
+      <div class="row" style="margin-top:8px"><button class="btn" id="bCopyGpt">Salin daftar untuk GPT</button></div>
+      <textarea id="bGpt" rows="5" style="width:100%;margin-top:8px;font:inherit;font-size:13px;padding:8px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box" placeholder="Momogi Jagung: Rp1.500&#10;Nabati Wafer: Rp1.000&#10;Pop Mie: Rp6.500"></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn p" id="bGptApply">Isi harga jual</button></div>
+      <p class="note" id="bGptMsg">Satu produk per baris, mis. "Momogi Jagung: Rp1.500". Format tabel / daftar bernomor dari GPT juga bisa. Harga tersimpan ke produk saat Simpan belanja.</p>
+    </details>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
       <label>Ongkir (Rp)<br><input type="number" id="bShip" min="0" value="0"></label>
       <label>Biaya layanan (Rp)<br><input type="number" id="bFee" min="0" value="0"></label>
@@ -191,7 +197,7 @@ input[type=number]{width:100%}
       <span>Total dibayar: <span class="total" id="bTotal">Rp0</span></span>
       <button class="btn p" id="bSave">Simpan belanja</button>
     </div>
-    <p class="note">Modal/pcs = subtotal produk + porsi ongkir & biaya layanan − porsi diskon (dibagi sesuai porsi subtotal), jadi modal sudah setelah diskon. Biaya OB tidak dimasukkan ke modal, tapi dikurangkan dari laba kotor menjadi laba bersih. Harga jual/pcs bisa langsung diubah di tabel: tersimpan ke produk, dan omzet & laba ikut dihitung ulang. Subtotal dari teks Shopee dikunci.</p>
+    <p class="note">Modal/pcs = subtotal produk + porsi ongkir & biaya layanan − porsi diskon (dibagi sesuai porsi subtotal), jadi modal sudah setelah diskon. Biaya OB tidak dimasukkan ke modal, tapi dikurangkan dari laba kotor menjadi laba bersih. Harga jual/pcs ditentukan dari GPT: tempel jawabannya di atas, atau ubah langsung di tabel. Tersimpan ke produk, dan omzet & laba ikut dihitung ulang. Subtotal dari teks Shopee dikunci.</p>
   </div>
   <div class="card" style="margin-top:12px"><h2>Riwayat belanja</h2><div class="tbl" id="buyList"></div></div>
 </section>
@@ -223,9 +229,14 @@ input[type=number]{width:100%}
   <div class="card">
     <div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">Produk & stok</h2>
       <div class="row"><input id="npName" placeholder="Nama produk baru"><input type="number" id="npPrice" placeholder="Harga jual" style="width:120px"><button class="btn p" id="npAdd">Tambah</button></div></div>
-    <div class="row" style="margin-bottom:8px"><button class="btn" id="useAllSug">Pakai semua harga saran</button></div>
+    <details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600">Tempel harga jual dari GPT</summary>
+      <div class="row" style="margin-top:8px"><button class="btn" id="sCopyGpt">Salin daftar untuk GPT</button></div>
+      <textarea id="sGpt" rows="5" style="width:100%;margin-top:8px;font:inherit;font-size:13px;padding:8px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box" placeholder="Momogi Jagung: Rp1.500&#10;Nabati Wafer: Rp1.000&#10;Pop Mie: Rp6.500"></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn p" id="sGptApply">Terapkan harga</button></div>
+      <p class="note" id="sGptMsg">Satu produk per baris, mis. "Momogi Jagung: Rp1.500". Format tabel / daftar bernomor dari GPT juga bisa. Kamu akan diminta konfirmasi sebelum harga diubah.</p>
+    </details>
     <div class="tbl" id="prodTable"></div>
-    <p class="note">Harga saran = modal/pcs dibulatkan ke Rp250 terdekat (mis. modal 1.150 → 1.250, modal 1.080 → 1.000), jadi untung/rugi per pcs tidak lebih dari Rp125. Harga jual tetap kamu yang menentukan.</p>
+    <p class="note">Harga jual ditentukan dari GPT: klik “Salin daftar untuk GPT”, tempel ke GPT, lalu tempel jawabannya di kotak atas. Harga juga tetap bisa diubah langsung di tabel.</p>
     <p class="note">Stok = total dibeli − terjual + penyesuaian. Klik “Opname” kalau hitungan fisik beda (hilang/rusak/dimakan sendiri 😄).</p>
   </div>
 </section>
@@ -316,8 +327,6 @@ function stockOf(pid,cs){
   return{bought,sold,adj,stock:bought-sold+adj};
 }
 function avgCost(pid,cs){const r=cs[pid];return r&&r.qty?r.cost/r.qty:null}
-// saran harga: modal dibulatkan ke kelipatan Rp250 terdekat (1.150→1.250, 1.080→1.000)
-const suggestPrice=c=>c==null?null:Math.max(250,Math.round(c/250)*250);
 function ledgerAll(){
   const L=[];
   const byDay={};
@@ -468,7 +477,7 @@ function addBuyRow(pid,qty='',cost='',newName=''){const tr=document.createElemen
   tr.querySelector('.btn').onclick=()=>{tr.remove();calcBuy()};$('#bItems').appendChild(tr);calcBuy()}
 function readBuy(){return[...$('#bItems').children].map(tr=>({pid:tr.querySelector('.bp').value,qty:+tr.querySelector('.bq').value||0,cost:+tr.querySelector('.bc').value||0,price:+tr.querySelector('.bpr').value||0,tr}))}
 function calcBuy(){const items=readBuy();const b={items,ship:$('#bShip').value,fee:$('#bFee').value,disc:$('#bDisc').value,ob:$('#bOb').value};const sub=items.reduce((a,i)=>a+i.cost,0);const tot=purchaseTotal(b);const f=sub?tot/sub:1;
-  for(const i of items){const u=i.qty?i.cost*f/i.qty:0;const pr=i.price;i.tr.querySelector('.bu').innerHTML=i.qty&&i.cost?`${rp(u)}<div style="font-size:11px" class="${pr>u?'in':'out'}">untung ${rp(pr-u)}</div><div style="font-size:11px" class="muted">saran ${rp(suggestPrice(u))}</div>`:'-'}
+  for(const i of items){const u=i.qty?i.cost*f/i.qty:0;const pr=i.price;i.tr.querySelector('.bu').innerHTML=i.qty&&i.cost?`${rp(u)}<div style="font-size:11px" class="${pr>u?'in':'out'}">untung ${rp(pr-u)}</div>`:'-'}
   const sm=purchaseSummary(b);$('#bSum').innerHTML=items.some(i=>i.qty&&i.cost)?summaryHtml(sm):'';
   $('#bTotal').textContent=rp(sm.out)+(sm.ob?` (Shopee ${rp(tot)} + OB ${rp(sm.ob)})`:'')}
 $('#bItems').addEventListener('input',e=>{if(e.target.classList.contains('bpr'))syncBuyPrice(e.target);calcBuy()});
@@ -512,17 +521,12 @@ $('#ledger').onclick=e=>{const id=e.target.dataset.delCash;if(id&&confirm('Hapus
 
 /* ---------- stok ---------- */
 function renderStok(){const cs=costStats();
-  $('#prodTable').innerHTML=`<table><tr><th>Produk</th><th class="r">Harga jual</th><th class="r">Modal/pcs</th><th class="r">Saran</th><th class="r">Untung/pcs</th><th class="r">Beli</th><th class="r">Terjual</th><th class="r">Stok</th><th></th></tr>${S.products.map(p=>{const s=stockOf(p.id,cs);const c=avgCost(p.id,cs);
-    return`<tr style="${p.active===false?'opacity:.5':''}"><td>${esc(p.name)}</td><td class="r"><input type="number" value="${p.price}" data-price="${p.id}" style="width:90px;text-align:right"></td><td class="r">${c==null?'<span class="muted">-</span>':rp(c)}</td><td class="r" style="white-space:nowrap">${c==null?'<span class="muted">-</span>':rp(suggestPrice(c))+(suggestPrice(c)!==p.price?` <button class="btn x" data-sug="${p.id}" title="Pakai harga saran">Pakai</button>`:' ✔')}</td><td class="r ${c!=null&&p.price<c?'out':''}">${c==null?'-':rp(p.price-c)}</td><td class="r">${s.bought}</td><td class="r">${s.sold}</td><td class="r"><b>${s.stock}</b>${s.adj?`<div class="note">adj ${s.adj>0?'+':''}${s.adj}</div>`:''}</td><td class="r" style="white-space:nowrap"><button class="btn x" data-opname="${p.id}">Opname</button><button class="btn x" data-toggle="${p.id}">${p.active===false?'Aktifkan':'Sembunyikan'}</button></td></tr>`}).join('')}</table>`}
+  $('#prodTable').innerHTML=`<table><tr><th>Produk</th><th class="r">Harga jual</th><th class="r">Modal/pcs</th><th class="r">Untung/pcs</th><th class="r">Beli</th><th class="r">Terjual</th><th class="r">Stok</th><th></th></tr>${S.products.map(p=>{const s=stockOf(p.id,cs);const c=avgCost(p.id,cs);
+    return`<tr style="${p.active===false?'opacity:.5':''}"><td>${esc(p.name)}</td><td class="r"><input type="number" value="${p.price}" data-price="${p.id}" style="width:90px;text-align:right"></td><td class="r">${c==null?'<span class="muted">-</span>':rp(c)}</td><td class="r ${c!=null&&p.price<c?'out':''}">${c==null?'-':rp(p.price-c)}</td><td class="r">${s.bought}</td><td class="r">${s.sold}</td><td class="r"><b>${s.stock}</b>${s.adj?`<div class="note">adj ${s.adj>0?'+':''}${s.adj}</div>`:''}</td><td class="r" style="white-space:nowrap"><button class="btn x" data-opname="${p.id}">Opname</button><button class="btn x" data-toggle="${p.id}">${p.active===false?'Aktifkan':'Sembunyikan'}</button></td></tr>`}).join('')}</table>`}
 $('#prodTable').addEventListener('change',e=>{const id=e.target.dataset.price;if(id){prod(id).price=+e.target.value||0;save();toast('Harga diperbarui (berlaku untuk penjualan berikutnya)')}});
-$('#prodTable').addEventListener('click',e=>{const o=e.target.dataset.opname,t=e.target.dataset.toggle,g=e.target.dataset.sug;
-  if(g){const p=prod(g);p.price=suggestPrice(avgCost(g,costStats()));save();toast(p.name+' → '+rp(p.price))}
+$('#prodTable').addEventListener('click',e=>{const o=e.target.dataset.opname,t=e.target.dataset.toggle;
   if(o){const cur=stockOf(o,costStats()).stock;const v=prompt('Stok fisik '+prod(o).name+' sekarang berapa?',cur);if(v===null||v==='')return;const d=Math.round(+v)-cur;if(isNaN(d))return;if(d){S.adjust.push({id:uid(),date:today(),pid:o,qty:d});save();toast('Stok disesuaikan '+(d>0?'+':'')+d)}}
   if(t){const p=prod(t);p.active=p.active===false;save()}});
-$('#useAllSug').onclick=()=>{const cs=costStats();const ch=S.products.map(p=>({p,v:suggestPrice(avgCost(p.id,cs))})).filter(x=>x.v!=null&&x.v!==x.p.price);
-  if(!ch.length)return toast('Semua harga sudah sesuai saran');
-  if(!confirm('Ubah harga:\n'+ch.map(x=>`${x.p.name}: ${rp(x.p.price)} → ${rp(x.v)}`).join('\n')))return;
-  for(const x of ch)x.p.price=x.v;save();toast(ch.length+' harga diperbarui')};
 $('#npAdd').onclick=()=>{const name=$('#npName').value.trim();if(!name)return;S.products.push({id:uid(),name,price:+$('#npPrice').value||0,active:true});$('#npName').value='';$('#npPrice').value='';save();refreshBuySelects();toast('Produk ditambahkan')};
 function refreshBuySelects(){document.querySelectorAll('#bItems .bp').forEach(s=>{const v=s.value;s.innerHTML=prodOptions(v,s.dataset.new)})}
 /* ---------- tempel teks pesanan Shopee ---------- */
@@ -556,6 +560,50 @@ $('#bParse').onclick=()=>{const o=parseShopee($('#bPaste').value);if(!o.items.le
   if(o.ob)msg+=` Biaya OB ${rp(o.ob)} dicatat terpisah (tidak masuk modal).`;
   if(baru)msg+=` ${baru} baris belum cocok dengan produk yang ada → akan dibuat produk baru (atau pilih produk lain).`;
   $('#bParseMsg').textContent=msg;toast('Form belanja terisi, cek lalu Simpan')};
+
+/* ---------- tempel harga jual dari GPT ---------- */
+const PRICE_RE=/(Rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})+|\d+(?:[.,]\d+)?)\s*(rb|ribu|k)?(?![\d.,]*\d)(?!\s*(?:gr|g|gram|ml|kg|l|pcs|pc|biji|x|%)\b)/gi;
+function priceIn(text){ // harga per baris: utamakan yang ber-"Rp", ambil yang terakhir (mis. "modal Rp1.150 → jual Rp1.500")
+  const ms=[];let m;PRICE_RE.lastIndex=0;
+  while(m=PRICE_RE.exec(text)){let v;if(m[3])v=Math.round(parseFloat(m[2].replace(',','.'))*1000);else if(/^\d{1,3}(?:[.,]\d{3})+$/.test(m[2]))v=+m[2].replace(/[.,]/g,'');else v=parseFloat(m[2].replace(',','.'));
+    if(m[1]||m[3]||v>=100)ms.push({v,rp:!!(m[1]||m[3]),i:m.index})}
+  const pick=ms.filter(x=>x.rp).length?ms.filter(x=>x.rp):ms;return pick.length?{v:pick[pick.length-1].v,first:ms[0].i}:null}
+function cleanPriceName(n){return n.replace(/\(.*?(\)|$)/g,' ').replace(/\b(?:harga(?: jual)?|jual|modal|hpp|saran|rekomendasi)\b.*$/i,' ').replace(/[\s:=\-–—→>|,]+$/,'').replace(/\s+/g,' ').trim()}
+function parsePriceList(txt){const out=[];
+  for(const line of txt.split(/\n/)){const l=line.replace(/\*\*|__|`/g,'').replace(/^\s*(?:\d+[.)]|[-*•])\s+/,'').trim();if(!l||!/\d/.test(l))continue;
+    let name,price;
+    if(l.includes('|')){const cells=l.split('|').map(c=>c.trim()).filter(Boolean);if(cells.every(c=>/^[-:\s]+$/.test(c)))continue;
+      const ps=cells.map(c=>priceIn(c));const last=ps.map(p=>p&&p.v).filter(Boolean).pop();if(!last)continue;price=last;name=cells.find((c,i)=>!ps[i]&&/[a-z]/i.test(c))||'';}
+    else{const p=priceIn(l);if(!p)continue;price=p.v;name=l.slice(0,p.first)}
+    name=cleanPriceName(name);if(name&&price)out.push({name,price})}
+  return out}
+// cocokkan nama: sama persis dulu, kalau tidak pakai kemiripan kata
+function findByName(name,list){const k=name.toLowerCase().replace(/\s+/g,' ').trim();const ex=list.find(x=>x.name.toLowerCase().replace(/\s+/g,' ').trim()===k);if(ex)return ex;
+  const have=new Set(toks(name));let best=null,score=0;
+  for(const x of list){const t=toks(x.name);if(!t.length)continue;const sc=t.filter(w=>have.has(w)).length/t.length;if(sc>score||(sc===score&&best&&t.length>toks(best.name).length)){score=sc;best=x}}
+  return score>=0.5?best:null}
+function copyText(t){const done=()=>toast('Tersalin, tempel ke GPT');
+  const fb=()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){toast('Gagal menyalin')}a.remove()};
+  navigator.clipboard?navigator.clipboard.writeText(t).then(done,fb):fb()}
+const GPT_ASK='Tentukan harga jual per pcs untuk camilan warung kantor berikut. Balas HANYA dengan daftar, satu produk per baris, format "Nama produk: Rp harga", nama produk persis seperti di bawah.\n\n';
+function buyRowName(tr){const sel=tr.querySelector('.bp');return sel.value==='new'?sel.dataset.new:prod(sel.value).name}
+$('#bCopyGpt').onclick=()=>{const items=readBuy();const b={items,ship:$('#bShip').value,fee:$('#bFee').value,disc:$('#bDisc').value};const sub=items.reduce((a,i)=>a+i.cost,0);const f=sub?purchaseTotal(b)/sub:1;
+  const seen=new Set(),lines=[];for(const i of items){const n=buyRowName(i.tr);if(!n||seen.has(n))continue;seen.add(n);lines.push(n+(i.qty&&i.cost?` — modal ${rp(i.cost*f/i.qty)}/pcs`:''))}
+  if(!lines.length)return toast('Belum ada produk di form belanja');copyText(GPT_ASK+lines.join('\n'))};
+$('#bGptApply').onclick=()=>{const list=parsePriceList($('#bGpt').value);if(!list.length)return toast('Tidak ada harga yang terbaca');
+  const rows=[...$('#bItems').children].map(tr=>({name:buyRowName(tr),tr}));const ok=[],miss=[];
+  for(const x of list){const r=findByName(x.name,rows);if(!r){miss.push(x.name);continue}const inp=r.tr.querySelector('.bpr');inp.value=x.price;syncBuyPrice(inp);ok.push(r.name+' '+rp(x.price))}
+  calcBuy();let msg=`${ok.length} harga terisi.`;if(miss.length)msg+=` ⚠ Tidak cocok dengan baris belanja: ${miss.join(', ')}.`;
+  const kosong=rows.filter(r=>!+r.tr.querySelector('.bpr').value&&+r.tr.querySelector('.bq').value).length;if(kosong)msg+=` ${kosong} baris masih tanpa harga.`;
+  $('#bGptMsg').textContent=msg;toast(ok.length+' harga terisi, cek lalu Simpan')};
+$('#sCopyGpt').onclick=()=>{const cs=costStats();const lines=S.products.filter(p=>p.active!==false).map(p=>{const c=avgCost(p.id,cs);return p.name+(c!=null?` — modal ${rp(c)}/pcs`:'')});
+  if(!lines.length)return toast('Belum ada produk');copyText(GPT_ASK+lines.join('\n'))};
+$('#sGptApply').onclick=()=>{const list=parsePriceList($('#sGpt').value);if(!list.length)return toast('Tidak ada harga yang terbaca');
+  const ch=new Map(),miss=[];for(const x of list){const p=findByName(x.name,S.products);if(!p){miss.push(x.name);continue}ch.set(p,x.price)}
+  const diff=[...ch].filter(([p,v])=>p.price!==v);let msg='';if(miss.length)msg=`⚠ Tidak cocok dengan produk mana pun: ${miss.join(', ')}.`;
+  if(!diff.length){$('#sGptMsg').textContent=(ch.size?'Semua harga sudah sama. ':'')+msg;return toast(ch.size?'Tidak ada harga yang berubah':'Tidak ada produk yang cocok')}
+  if(!confirm('Ubah harga jual:\n'+diff.map(([p,v])=>`${p.name}: ${rp(p.price)} → ${rp(v)}`).join('\n')+(miss.length?'\n\nTidak cocok (dilewati): '+miss.join(', '):'')))return;
+  for(const[p,v]of diff)p.price=v;$('#sGptMsg').textContent=`${diff.length} harga diperbarui. `+msg;save();toast(diff.length+' harga diperbarui')};
 
 /* ---------- data ---------- */
 function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
