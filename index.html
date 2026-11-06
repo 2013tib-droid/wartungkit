@@ -3,13 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WartungKit</title>
-<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-<link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0f766e">
-<meta name="apple-mobile-web-app-title" content="WartungKit">
+<title>Warung Kantor</title>
 <style>
 :root{
   --bg:#f5f6f8;--card:#fff;--text:#1d2330;--muted:#6b7280;--line:#e5e7eb;
@@ -33,9 +27,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-a
 header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
 .wrap{max-width:1100px;margin:0 auto;padding:0 16px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 6px}
-h1{font-size:18px;margin:0;display:flex;align-items:center;gap:9px;letter-spacing:-.01em}
-h1 img{width:30px;height:30px;border-radius:8px;flex:none}
-h1 .k{color:var(--brand)}
+h1{font-size:18px;margin:0}
 nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px}
 nav button{border:0;background:none;color:var(--muted);padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer;white-space:nowrap}
 nav button.on{background:var(--brand-soft);color:var(--brand);font-weight:600}
@@ -119,7 +111,7 @@ input[type=number]{width:100%}
 </head>
 <body>
 <header><div class="wrap">
-  <div class="top"><h1><img src="assets/logo.svg" alt=""><span>Wartung<span class="k">Kit</span></span></h1><div style="text-align:right"><div class="note" id="saldoTop"></div><div class="note" id="syncStat" style="font-size:12px"></div></div></div>
+  <div class="top"><h1>🏪 Warung Kantor</h1><div style="text-align:right"><div class="note" id="saldoTop"></div><div class="note" id="syncStat" style="font-size:12px"></div></div></div>
   <nav id="nav">
     <button data-t="dash" class="on">Dashboard</button>
     <button data-t="jual">Jual</button>
@@ -615,7 +607,7 @@ $('#sGptApply').onclick=()=>{const list=parsePriceList($('#sGpt').value);if(!lis
 
 /* ---------- data ---------- */
 function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('#exp').onclick=()=>download('wartungkit-'+today()+'.json',JSON.stringify(S,null,1),'application/json');
+$('#exp').onclick=()=>download('warung-kantor-'+today()+'.json',JSON.stringify(S,null,1),'application/json');
 $('#expCsv').onclick=()=>download('penjualan-'+today()+'.csv','tanggal,produk,qty,harga,jumlah\n'+S.sales.map(s=>[s.date,'"'+prod(s.pid).name.replace(/"/g,'""')+'"',s.qty,s.price,s.qty*s.price].join(',')).join('\n'),'text/csv');
 $('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.products)throw 0;if(confirm('Ganti semua data dengan isi file ini?')){S=Object.assign(blank(),d);save();toast('Data dipulihkan')}}catch(x){toast('File tidak valid')}};r.readAsText(f);e.target.value=''};
 $('#reset').onclick=()=>{if(confirm('Yakin hapus SEMUA transaksi (penjualan, belanja, kas, opname)? Daftar produk tetap. Unduh cadangan dulu kalau ragu.')&&confirm('Sekali lagi: hapus semua transaksi?')){for(const k of TX)for(const x of S[k])tomb(x.id);for(const k of TX)S[k]=[];save()}};
