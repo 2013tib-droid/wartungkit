@@ -8,16 +8,25 @@
 :root{
   --bg:#f5f6f8;--card:#fff;--text:#1d2330;--muted:#6b7280;--line:#e5e7eb;
   --brand:#0f766e;--brand-soft:#ccfbf1;--in:#15803d;--out:#b91c1c;--warn:#b45309;--warn-soft:#fef3c7;
+  --c1:#4f46e5;--c1-soft:#e0e7ff;--c2:#16a34a;--c2-soft:#dcfce7;--c3:#0891b2;--c3-soft:#cffafe;
+  --c4:#e11d48;--c4-soft:#ffe4e6;--c5:#d97706;--c5-soft:#fef3c7;--c6:#9333ea;--c6-soft:#f3e8ff;
+  --hero1:#0d9488;--hero2:#4f46e5;--hero3:#9333ea;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0f1115;--card:#181b22;--text:#e5e7eb;--muted:#9ca3af;--line:#2a2f3a;
     --brand:#2dd4bf;--brand-soft:#134e4a;--in:#4ade80;--out:#f87171;--warn:#fbbf24;--warn-soft:#422006;
+    --c1:#818cf8;--c1-soft:#1e1b4b;--c2:#4ade80;--c2-soft:#052e16;--c3:#22d3ee;--c3-soft:#083344;
+    --c4:#fb7185;--c4-soft:#4c0519;--c5:#fbbf24;--c5-soft:#451a03;--c6:#c084fc;--c6-soft:#3b0764;
+    --hero1:#0f766e;--hero2:#4338ca;--hero3:#7e22ce;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f1115;--card:#181b22;--text:#e5e7eb;--muted:#9ca3af;--line:#2a2f3a;
   --brand:#2dd4bf;--brand-soft:#134e4a;--in:#4ade80;--out:#f87171;--warn:#fbbf24;--warn-soft:#422006;
+    --c1:#818cf8;--c1-soft:#1e1b4b;--c2:#4ade80;--c2-soft:#052e16;--c3:#22d3ee;--c3-soft:#083344;
+    --c4:#fb7185;--c4-soft:#4c0519;--c5:#fbbf24;--c5-soft:#451a03;--c6:#c084fc;--c6-soft:#3b0764;
+    --hero1:#0f766e;--hero2:#4338ca;--hero3:#7e22ce;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -74,7 +83,36 @@ input[type=number]{width:100%}
 .psum .hl{border-top:1px dashed var(--line);margin-top:4px;padding-top:6px;font-weight:600}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
-@media (max-width:600px){.kpi .v{font-size:19px}.two{grid-template-columns:1fr}}
+header::before{content:"";display:block;height:4px;background:linear-gradient(90deg,var(--c3),var(--c1),var(--c6),var(--c4),var(--c5))}
+#period button.on{background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff}
+.hero{position:relative;overflow:hidden;border-radius:16px;padding:18px;color:#fff;background:linear-gradient(135deg,var(--hero1),var(--hero2) 60%,var(--hero3));display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:#fff;opacity:.09;pointer-events:none}
+.hero::before{width:220px;height:220px;right:-60px;top:-90px}.hero::after{width:140px;height:140px;right:120px;bottom:-80px}
+.hero .hi{font-size:13px;opacity:.9}.hero .hl{font-size:13px;opacity:.85;margin-top:8px}
+.hero .hv{font-size:32px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.hero .hs{font-size:12px;opacity:.8}
+.hero-r{display:flex;flex-wrap:wrap;gap:8px;position:relative}
+.hpill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:8px 12px;min-width:96px;backdrop-filter:blur(4px)}
+.hpill span{display:block;font-size:11px;opacity:.85}.hpill b{font-size:16px}
+.tile{--c:var(--c1);--soft:var(--c1-soft);position:relative;overflow:hidden;background:linear-gradient(160deg,var(--soft),var(--card) 75%);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tile::after{content:"";position:absolute;right:-26px;top:-26px;width:84px;height:84px;border-radius:50%;background:var(--c);opacity:.12}
+.tile .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--c);font-size:17px;margin-bottom:8px;box-shadow:0 4px 10px -4px var(--c)}
+.tile .l{color:var(--muted);font-size:13px}.tile .v{font-size:22px;font-weight:800;margin-top:2px;color:var(--c)}
+.tile .s{color:var(--muted);font-size:12px;margin-top:2px}
+.meter{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}.meter i{display:block;height:100%;background:var(--c);border-radius:inherit}
+.k1{--c:var(--c1);--soft:var(--c1-soft)}.k2{--c:var(--c2);--soft:var(--c2-soft)}.k3{--c:var(--c3);--soft:var(--c3-soft)}
+.k4{--c:var(--c4);--soft:var(--c4-soft)}.k5{--c:var(--c5);--soft:var(--c5-soft)}.k6{--c:var(--c6);--soft:var(--c6-soft)}
+.dcard{border-top:3px solid var(--c)}
+.dcard h2{display:flex;align-items:center;gap:8px}
+.dcard h2 .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--soft);font-size:14px}
+.rank{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.rank:last-child{border-bottom:0}
+.rank .no{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;background:var(--soft);color:var(--c)}
+.rank .no.m{background:var(--c);color:#fff;font-size:15px}
+.rank .info{flex:1;min-width:0}.rank .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank .bar{height:7px;border-radius:99px;background:var(--soft);margin-top:5px;overflow:hidden}.rank .bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--c),color-mix(in srgb,var(--c) 55%,var(--card)))}
+.rank .nums{text-align:right;flex:none;font-size:14px}.rank .nums b{color:var(--c)}.rank .nums div{font-size:11px;color:var(--muted)}
+.tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;font-weight:700;background:var(--soft);color:var(--c)}
+@media (max-width:600px){.kpi .v,.tile .v{font-size:19px}.two{grid-template-columns:1fr}.hero .hv{font-size:27px}.hpill{flex:1}}
 </style>
 </head>
 <body>
@@ -103,14 +141,15 @@ input[type=number]{width:100%}
     </div>
     <span class="note" id="periodLabel"></span>
   </div>
+  <div class="hero" id="hero"></div>
   <div class="grid kpis" id="kpis"></div>
   <div class="grid two" style="margin-top:12px">
-    <div class="card"><h2>Penjualan harian</h2><div class="chart"><div id="cDaily"></div></div></div>
-    <div class="card"><h2>Kas masuk vs keluar per minggu</h2><div class="chart"><div id="cWeekly"></div></div></div>
+    <div class="card dcard k1"><h2><span class="ic">📊</span>Penjualan harian</h2><div class="chart"><div id="cDaily"></div></div></div>
+    <div class="card dcard k3"><h2><span class="ic">💸</span>Kas masuk vs keluar per minggu</h2><div class="chart"><div id="cWeekly"></div></div></div>
   </div>
   <div class="grid two" style="margin-top:12px">
-    <div class="card"><h2>Produk terlaris</h2><div class="tbl" id="topProds"></div></div>
-    <div class="card"><h2>Perlu restock</h2><div class="tbl" id="lowStock"></div></div>
+    <div class="card dcard k6"><h2><span class="ic">🏆</span>Produk terlaris</h2><div id="topProds"></div></div>
+    <div class="card dcard k5"><h2><span class="ic">📦</span>Perlu restock</h2><div class="tbl" id="lowStock"></div></div>
   </div>
 </section>
 
@@ -331,40 +370,44 @@ function renderDash(){
   const saldo=L.length?L[L.length-1].bal:0;
   let stokVal=0;for(const p of S.products){const st=stockOf(p.id,cs).stock;const c=avgCost(p.id,cs);if(st>0&&c)stokVal+=st*c}
   const days=Math.max(1,Math.round((parse(b)-parse(a))/864e5)+1);
+  const margin=omzet?Math.round(laba/omzet*100):0;
+  const h=new Date().getHours(),salam=h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam';
+  $('#hero').innerHTML=`<div style="position:relative"><div class="hi">${salam} 👋</div><div class="hl">Saldo kas sekarang</div><div class="hv">${rp(saldo)}</div><div class="hs">uang di tangan</div></div>
+    <div class="hero-r">${[['Laba periode ini',rp(laba)],['Margin',margin+'%'],['Terjual',pcs+' pcs']].map(([l,v])=>`<div class="hpill"><span>${l}</span><b>${v}</b></div>`).join('')}</div>`;
   $('#kpis').innerHTML=[
-    ['Omzet',rp(omzet),pcs+' pcs · '+rp(omzet/days)+'/hari'],
-    ['Laba kotor',rp(laba),(omzet?Math.round(laba/omzet*100):0)+'% margin'+(noCost?` · <span class="badge">${noCost} pcs tanpa modal</span>`:'')],
-    ['Laba bersih',rp(laba-obCost),'laba kotor − biaya OB '+rp(obCost)],
-    ['Kas masuk',`<span class="in">${rp(cin)}</span>`,'penjualan + modal'],
-    ['Kas keluar',`<span class="out">${rp(cout)}</span>`,'belanja + biaya'],
-    ['Saldo kas sekarang',rp(saldo),'uang di tangan'],
-    ['Nilai stok',rp(stokVal),'dihitung dari modal']
-  ].map(([l,v,s])=>`<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+    ['k1','🛒','Omzet',rp(omzet),pcs+' pcs · '+rp(omzet/days)+'/hari'],
+    ['k2','📈','Laba kotor',rp(laba),margin+'% margin'+(noCost?` · <span class="badge">${noCost} pcs tanpa modal</span>`:'')+`<div class="meter"><i style="width:${Math.max(0,Math.min(100,margin))}%"></i></div>`],
+    ['k6','💰','Laba bersih',rp(laba-obCost),'laba kotor − biaya OB '+rp(obCost)],
+    ['k3','📥','Kas masuk',rp(cin),'penjualan + modal'],
+    ['k4','📤','Kas keluar',rp(cout),'belanja + biaya'],
+    ['k5','📦','Nilai stok',rp(stokVal),'dihitung dari modal']
+  ].map(([k,ic,l,v,s])=>`<div class="tile ${k}"><div class="ic">${ic}</div><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
 
   // daily chart
   const dl=[],dv=[],dp=[];const start=parse(a),n=Math.min(days,62);const st0=new Date(parse(b));st0.setDate(st0.getDate()-n+1);
   for(let i=0;i<n;i++){const d=new Date(st0);d.setDate(d.getDate()+i);const k=ymd(d);const ss=S.sales.filter(s=>s.date===k);
     dl.push(d.toLocaleDateString('id-ID',{day:'numeric',month:'short'}));dv.push(ss.reduce((x,s)=>x+s.qty*s.price,0));
     dp.push(ss.reduce((x,s)=>{const c=avgCost(s.pid,cs);return x+(c==null?0:s.qty*(s.price-c))},0))}
-  draw('cDaily','bar',dl,[{label:'Omzet',data:dv,color:'brand'},{label:'Laba',data:dp,color:'in'}]);
+  draw('cDaily','bar',dl,[{label:'Omzet',data:dv,color:'c1'},{label:'Laba',data:dp,color:'c2'}]);
 
   // weekly cash (last 8 weeks)
   const wl=[],wi=[],wo=[];const m0=monday(new Date());
   for(let i=7;i>=0;i--){const s=new Date(m0);s.setDate(s.getDate()-7*i);const e=new Date(s);e.setDate(e.getDate()+6);const A=ymd(s),B=ymd(e);
     const rr=L.filter(r=>r.date>=A&&r.date<=B);wl.push(s.toLocaleDateString('id-ID',{day:'numeric',month:'short'}));
     wi.push(rr.filter(r=>r.type==='in').reduce((x,r)=>x+r.amt,0));wo.push(rr.filter(r=>r.type==='out').reduce((x,r)=>x+r.amt,0))}
-  draw('cWeekly','bar',wl,[{label:'Masuk',data:wi,color:'in'},{label:'Keluar',data:wo,color:'out'}]);
+  draw('cWeekly','bar',wl,[{label:'Masuk',data:wi,color:'c3'},{label:'Keluar',data:wo,color:'c4'}]);
 
   // top products
   const agg={};for(const s of sales){const r=agg[s.pid]||(agg[s.pid]={qty:0,amt:0,laba:0});const c=avgCost(s.pid,cs);r.qty+=s.qty;r.amt+=s.qty*s.price;r.laba+=c==null?0:s.qty*(s.price-c)}
   const top=Object.entries(agg).sort((x,y)=>y[1].amt-x[1].amt).slice(0,10);
-  $('#topProds').innerHTML=top.length?`<table><tr><th>Produk</th><th class="r">Pcs</th><th class="r">Omzet</th><th class="r">Laba</th></tr>${top.map(([id,r])=>`<tr><td>${esc(prod(id).name)}</td><td class="r">${r.qty}</td><td class="r">${rp(r.amt)}</td><td class="r">${rp(r.laba)}</td></tr>`).join('')}</table>`:'<div class="empty">Belum ada penjualan di periode ini</div>';
+  const topMax=top.length?top[0][1].amt||1:1,medal=['🥇','🥈','🥉'];
+  $('#topProds').innerHTML=top.length?top.map(([id,r],i)=>`<div class="rank k${i%6+1}"><span class="no${i<3?' m':''}">${i<3?medal[i]:i+1}</span><div class="info"><div class="nm">${esc(prod(id).name)}</div><div class="bar"><i style="width:${Math.max(4,r.amt/topMax*100)}%"></i></div></div><div class="nums"><b>${rp(r.amt)}</b><div>${r.qty} pcs · laba ${rp(r.laba)}</div></div></div>`).join(''):'<div class="empty">Belum ada penjualan di periode ini</div>';
 
   // low stock: weekly velocity from last 28 days
   const d28=new Date();d28.setDate(d28.getDate()-27);const k28=ymd(d28);
   const low=S.products.filter(p=>p.active!==false).map(p=>{const st=stockOf(p.id,cs).stock;const sold=S.sales.filter(s=>s.pid===p.id&&s.date>=k28).reduce((x,s)=>x+s.qty,0);const perWeek=sold/4;return{p,st,perWeek,need:Math.max(0,Math.ceil(perWeek*1.2-st))}})
     .filter(r=>r.st<=Math.max(2,r.perWeek*0.5)).sort((x,y)=>(x.st-y.st)||(y.perWeek-x.perWeek)).slice(0,10);
-  $('#lowStock').innerHTML=low.length?`<table><tr><th>Produk</th><th class="r">Stok</th><th class="r">Laku/minggu</th><th class="r">Saran beli</th></tr>${low.map(r=>`<tr><td>${esc(r.p.name)}</td><td class="r">${r.st<=0?'<span class="badge">Habis</span>':r.st}</td><td class="r">${r.perWeek.toFixed(1)}</td><td class="r">${r.need||'-'}</td></tr>`).join('')}</table>`:'<div class="empty">Stok aman semua 👍</div>';
+  $('#lowStock').innerHTML=low.length?`<table><tr><th>Produk</th><th class="r">Stok</th><th class="r">Laku/minggu</th><th class="r">Saran beli</th></tr>${low.map(r=>`<tr><td>${esc(r.p.name)}</td><td class="r">${r.st<=0?'<span class="tag k4">Habis</span>':`<span class="tag k5">${r.st}</span>`}</td><td class="r">${r.perWeek.toFixed(1)}</td><td class="r">${r.need?`<span class="tag k2">+${r.need}</span>`:'-'}</td></tr>`).join('')}</table>`:'<div class="empty">Stok aman semua 👍</div>';
 }
 function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim()}
 function draw(id,type,labels,sets){
@@ -375,10 +418,11 @@ function draw(id,type,labels,sets){
   let g='';for(let i=0;i<=4;i++){const v=top*i/4;g+=`<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${k(v)}</text>`}
   const step=Math.ceil(n/Math.floor(W/56));let bars='',lab='';
   labels.forEach((l,i)=>{const x0=pl+gw*i+(gw-bw*sets.length)/2;
-    sets.forEach((s,j)=>{const v=s.data[i];const yy=y(v);bars+=`<rect x="${x0+j*bw}" y="${yy}" width="${Math.max(1,bw-2)}" height="${Math.max(0,H-pb-yy)}" rx="3" fill="var(--${s.color})"><title>${l} · ${s.label}: ${rp(v)}</title></rect>`});
+    sets.forEach((s,j)=>{const v=s.data[i];const yy=y(v);bars+=`<rect x="${x0+j*bw}" y="${yy}" width="${Math.max(1,bw-2)}" height="${Math.max(0,H-pb-yy)}" rx="4" fill="url(#${id}-g${j})"><title>${l} · ${s.label}: ${rp(v)}</title></rect>`});
     if(i%step===0)lab+=`<text x="${pl+gw*i+gw/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--muted)">${l}</text>`});
-  const leg=sets.map(s=>`<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px"><i style="width:10px;height:10px;border-radius:2px;background:var(--${s.color})"></i>${s.label}</span>`).join('');
-  el.innerHTML=`<div class="note" style="margin-bottom:4px">${leg}</div><svg width="100%" viewBox="0 0 ${W} ${H}" role="img">${g}${bars}${lab}</svg>`;
+  const defs=sets.map((s,j)=>`<linearGradient id="${id}-g${j}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--${s.color})"/><stop offset="1" style="stop-color:var(--${s.color});stop-opacity:.45"/></linearGradient>`).join('');
+  const leg=sets.map(s=>`<span style="display:inline-flex;align-items:center;gap:6px;margin-right:8px;padding:3px 10px;border-radius:99px;background:var(--${s.color}-soft);color:var(--${s.color});font-weight:600"><i style="width:9px;height:9px;border-radius:50%;background:var(--${s.color})"></i>${s.label} ${rp(s.data.reduce((x,v)=>x+v,0))}</span>`).join('');
+  el.innerHTML=`<div class="note" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px 0">${leg}</div><svg width="100%" viewBox="0 0 ${W} ${H}" role="img"><defs>${defs}</defs>${g}${bars}${lab}</svg>`;
 }
 let rsT;window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(render,200)});
 
