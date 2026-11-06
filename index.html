@@ -176,7 +176,7 @@ input[type=number]{width:100%}
       <p class="note" id="bParseMsg">Qty otomatis diubah ke pcs (Kuantitas × isi per pak, mis. "isi 10", "x 10 Pcs"). Cek pilihan produk tiap baris sebelum menyimpan.</p>
     </details>
     <div class="tbl"><table>
-      <thead><tr><th>Produk</th><th class="r" style="width:90px">Qty (pcs)</th><th class="r" style="width:140px">Subtotal (Rp)</th><th class="r" style="width:100px">Modal/pcs</th><th></th></tr></thead>
+      <thead><tr><th>Produk</th><th class="r" style="width:90px">Qty (pcs)</th><th class="r" style="width:110px">Subtotal (Rp)</th><th class="r" style="width:100px">Modal/pcs</th><th class="r" style="width:110px">Harga jual/pcs</th><th></th></tr></thead>
       <tbody id="bItems"></tbody>
     </table></div>
     <div class="row" style="margin:10px 0"><button class="btn" id="bAdd">+ Tambah baris</button></div>
@@ -191,7 +191,7 @@ input[type=number]{width:100%}
       <span>Total dibayar: <span class="total" id="bTotal">Rp0</span></span>
       <button class="btn p" id="bSave">Simpan belanja</button>
     </div>
-    <p class="note">Modal/pcs = subtotal produk + porsi ongkir & biaya layanan − porsi diskon (dibagi sesuai porsi subtotal), jadi modal sudah setelah diskon. Biaya OB tidak dimasukkan ke modal, tapi dikurangkan dari laba kotor menjadi laba bersih. Omzet = perkiraan kalau semua terjual dengan harga jual sekarang.</p>
+    <p class="note">Modal/pcs = subtotal produk + porsi ongkir & biaya layanan − porsi diskon (dibagi sesuai porsi subtotal), jadi modal sudah setelah diskon. Biaya OB tidak dimasukkan ke modal, tapi dikurangkan dari laba kotor menjadi laba bersih. Harga jual/pcs bisa langsung diubah di tabel: tersimpan ke produk, dan omzet & laba ikut dihitung ulang. Subtotal dari teks Shopee dikunci.</p>
   </div>
   <div class="card" style="margin-top:12px"><h2>Riwayat belanja</h2><div class="tbl" id="buyList"></div></div>
 </section>
@@ -291,7 +291,7 @@ const prod=id=>S.products.find(p=>p.id===id)||{name:'(produk dihapus)',price:0};
 function purchaseTotal(b){const sub=b.items.reduce((a,i)=>a+(+i.cost||0),0);return sub+(+b.ship||0)+(+b.fee||0)-(+b.disc||0)}
 function purchaseSummary(b){ // ringkasan laba per belanja kalau semua terjual di harga jual sekarang
   const modal=purchaseTotal(b),ob=+b.ob||0;let omzet=0,noPrice=0;
-  for(const i of b.items){const pr=i.pid==='new'?0:prod(i.pid).price;if(+i.qty&&!pr)noPrice++;omzet+=(+i.qty||0)*pr}
+  for(const i of b.items){const pr=i.price!=null?i.price:(i.pid==='new'?0:prod(i.pid).price);if(+i.qty&&!pr)noPrice++;omzet+=(+i.qty||0)*pr}
   const laba=omzet-modal;return{modal,ob,omzet,laba,bersih:laba-ob,noPrice,out:modal+ob};
 }
 function summaryHtml(s){const c=v=>v<0?'out':'in';
@@ -463,19 +463,28 @@ $('#salesList').onclick=e=>{const id=e.target.dataset.delSale;if(id&&confirm('Ha
 /* ---------- belanja ---------- */
 function prodOptions(sel,newName){return(newName?`<option value="new"${sel==='new'?' selected':''}>+ Produk baru: ${esc(newName)}</option>`:'')+S.products.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc(p.name)}</option>`).join('')}
 function addBuyRow(pid,qty='',cost='',newName=''){const tr=document.createElement('tr');
-  tr.innerHTML=`<td><select class="bp" style="width:100%" data-new="${esc(newName)}">${prodOptions(pid,newName)}</select></td><td><input type="number" class="bq" min="0" value="${qty}"></td><td><input type="number" class="bc" min="0" value="${cost}"></td><td class="r note bu">-</td><td><button class="btn x" title="Hapus">✕</button></td>`;
+  tr.innerHTML=`<td><select class="bp" style="width:100%" data-new="${esc(newName)}">${prodOptions(pid,newName)}</select></td><td><input type="number" class="bq" min="0" value="${qty}"></td><td>${cost!==''?`<input type="number" class="bc" min="0" value="${cost}" readonly tabindex="-1" title="Dari teks pesanan Shopee" style="border:0;background:transparent;text-align:right">`:`<input type="number" class="bc" min="0" value="">`}</td><td class="r note bu">-</td><td><input type="number" class="bpr" min="0" step="50" value="${pid&&pid!=='new'?prod(pid).price||'':''}" placeholder="isi harga" style="text-align:right"></td><td><button class="btn x" title="Hapus">✕</button></td>`;
+  {const sel=tr.querySelector('.bp'),pi=tr.querySelector('.bpr');if(!pi.value&&sel.value!=='new')pi.value=prod(sel.value).price||''}
   tr.querySelector('.btn').onclick=()=>{tr.remove();calcBuy()};$('#bItems').appendChild(tr);calcBuy()}
-function readBuy(){return[...$('#bItems').children].map(tr=>({pid:tr.querySelector('.bp').value,qty:+tr.querySelector('.bq').value||0,cost:+tr.querySelector('.bc').value||0,tr}))}
+function readBuy(){return[...$('#bItems').children].map(tr=>({pid:tr.querySelector('.bp').value,qty:+tr.querySelector('.bq').value||0,cost:+tr.querySelector('.bc').value||0,price:+tr.querySelector('.bpr').value||0,tr}))}
 function calcBuy(){const items=readBuy();const b={items,ship:$('#bShip').value,fee:$('#bFee').value,disc:$('#bDisc').value,ob:$('#bOb').value};const sub=items.reduce((a,i)=>a+i.cost,0);const tot=purchaseTotal(b);const f=sub?tot/sub:1;
-  for(const i of items){const u=i.qty?i.cost*f/i.qty:0;const pr=prod(i.pid).price;i.tr.querySelector('.bu').innerHTML=i.qty&&i.cost?`${rp(u)}<div style="font-size:11px" class="${pr>u?'in':'out'}">untung ${rp(pr-u)}</div><div style="font-size:11px" class="muted">saran ${rp(suggestPrice(u))}</div>`:'-'}
+  for(const i of items){const u=i.qty?i.cost*f/i.qty:0;const pr=i.price;i.tr.querySelector('.bu').innerHTML=i.qty&&i.cost?`${rp(u)}<div style="font-size:11px" class="${pr>u?'in':'out'}">untung ${rp(pr-u)}</div><div style="font-size:11px" class="muted">saran ${rp(suggestPrice(u))}</div>`:'-'}
   const sm=purchaseSummary(b);$('#bSum').innerHTML=items.some(i=>i.qty&&i.cost)?summaryHtml(sm):'';
   $('#bTotal').textContent=rp(sm.out)+(sm.ob?` (Shopee ${rp(tot)} + OB ${rp(sm.ob)})`:'')}
-$('#bItems').addEventListener('input',calcBuy);$('#bItems').addEventListener('change',calcBuy);['#bShip','#bFee','#bDisc','#bOb'].forEach(s=>$(s).oninput=calcBuy);
+$('#bItems').addEventListener('input',e=>{if(e.target.classList.contains('bpr'))syncBuyPrice(e.target);calcBuy()});
+$('#bItems').addEventListener('change',e=>{const t=e.target;
+  if(t.classList.contains('bp')){const pi=t.closest('tr').querySelector('.bpr');pi.value=t.value!=='new'?prod(t.value).price||'':''}
+  if(t.classList.contains('bpr')&&t.closest('tr').querySelector('.bp').value!=='new'){const p=prod(t.closest('tr').querySelector('.bp').value);const v=+t.value||0;if(p.id&&v!==p.price){p.price=v;save();toast(p.name+' → '+rp(v))}}});
+// baris lain dengan produk yang sama ikut harga yang sama
+function syncBuyPrice(inp){const tr=inp.closest('tr'),sel=tr.querySelector('.bp');const key=sel.value==='new'?'new:'+sel.dataset.new:sel.value;
+  document.querySelectorAll('#bItems tr').forEach(o=>{if(o===tr)return;const s2=o.querySelector('.bp');if((s2.value==='new'?'new:'+s2.dataset.new:s2.value)===key)o.querySelector('.bpr').value=inp.value})}
+$('#bItems').addEventListener('change',calcBuy);['#bShip','#bFee','#bDisc','#bOb'].forEach(s=>$(s).oninput=calcBuy);
 $('#bAdd').onclick=()=>addBuyRow();
 $('#bSave').onclick=()=>{const rows=readBuy().filter(i=>i.qty>0);if(!rows.length)return toast('Isi minimal satu produk dengan qty');
   const made={};for(const r of rows)if(r.pid==='new'){const n=r.tr.querySelector('.bp').dataset.new;const ex=S.products.find(p=>p.name.toLowerCase()===n.toLowerCase());
-    r.pid=ex?ex.id:(made[n]||(made[n]=uid(),S.products.push({id:made[n],name:n,price:0,active:true}),made[n]))}
-  const items=rows.map(({pid,qty,cost})=>({pid,qty,cost}));if(Object.keys(made).length)setTimeout(()=>toast('Produk baru dibuat — isi harga jualnya di Produk & Stok'),1900);
+    r.pid=ex?ex.id:(made[n]||(made[n]=uid(),S.products.push({id:made[n],name:n,price:r.price,active:true}),made[n]))}
+  for(const r of rows)if(r.price>0)prod(r.pid).price=r.price;
+  const items=rows.map(({pid,qty,cost})=>({pid,qty,cost}));if(rows.some(r=>!r.price))setTimeout(()=>toast('Ada produk tanpa harga jual — isi di Produk & Stok'),1900);
   S.purchases.push({id:uid(),date:$('#bDate').value||today(),note:$('#bNote').value.trim(),items,ship:+$('#bShip').value||0,fee:+$('#bFee').value||0,disc:+$('#bDisc').value||0,ob:+$('#bOb').value||0});
   $('#bItems').innerHTML='';$('#bNote').value='';['#bShip','#bFee','#bDisc','#bOb'].forEach(s=>$(s).value=0);addBuyRow();save();toast('Belanja tersimpan, stok bertambah')};
 function renderBeli(){const list=[...S.purchases].sort((a,b)=>b.date.localeCompare(a.date));
