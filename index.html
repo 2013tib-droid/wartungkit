@@ -67,6 +67,11 @@ input[type=number]{width:100%}
 .empty{color:var(--muted);text-align:center;padding:20px}
 .note{font-size:13px;color:var(--muted)}
 .total{font-size:18px;font-weight:700}
+.psum{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);font-size:14px}
+.psum:empty{display:none}
+.psum .ln{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+.psum .ln b{white-space:nowrap}
+.psum .hl{border-top:1px dashed var(--line);margin-top:4px;padding-top:6px;font-weight:600}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 @media (max-width:600px){.kpi .v{font-size:19px}.two{grid-template-columns:1fr}}
@@ -145,12 +150,14 @@ input[type=number]{width:100%}
       <label>Ongkir (Rp)<br><input type="number" id="bShip" min="0" value="0"></label>
       <label>Biaya layanan (Rp)<br><input type="number" id="bFee" min="0" value="0"></label>
       <label>Diskon / voucher (Rp)<br><input type="number" id="bDisc" min="0" value="0"></label>
+      <label>Biaya OB ambil barang (Rp)<br><input type="number" id="bOb" min="0" value="0"></label>
     </div>
+    <div class="psum" id="bSum"></div>
     <div class="row" style="justify-content:space-between;margin-top:12px">
       <span>Total dibayar: <span class="total" id="bTotal">Rp0</span></span>
       <button class="btn p" id="bSave">Simpan belanja</button>
     </div>
-    <p class="note">Ongkir, biaya layanan dan diskon dibagi rata ke modal per pcs sesuai porsi subtotal, jadi laba yang dihitung sudah bersih.</p>
+    <p class="note">Modal/pcs = subtotal produk + porsi ongkir & biaya layanan − porsi diskon (dibagi sesuai porsi subtotal), jadi modal sudah setelah diskon. Biaya OB tidak dimasukkan ke modal, tapi dikurangkan dari laba kotor menjadi laba bersih. Omzet = perkiraan kalau semua terjual dengan harga jual sekarang.</p>
   </div>
   <div class="card" style="margin-top:12px"><h2>Riwayat belanja</h2><div class="tbl" id="buyList"></div></div>
 </section>
@@ -246,7 +253,20 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clea
 const prod=id=>S.products.find(p=>p.id===id)||{name:'(produk dihapus)',price:0};
 
 /* ---------- derived ---------- */
+// total pembayaran barang (subtotal + ongkir + biaya layanan − diskon); biaya OB terpisah
 function purchaseTotal(b){const sub=b.items.reduce((a,i)=>a+(+i.cost||0),0);return sub+(+b.ship||0)+(+b.fee||0)-(+b.disc||0)}
+function purchaseSummary(b){ // ringkasan laba per belanja kalau semua terjual di harga jual sekarang
+  const modal=purchaseTotal(b),ob=+b.ob||0;let omzet=0,noPrice=0;
+  for(const i of b.items){const pr=i.pid==='new'?0:prod(i.pid).price;if(+i.qty&&!pr)noPrice++;omzet+=(+i.qty||0)*pr}
+  const laba=omzet-modal;return{modal,ob,omzet,laba,bersih:laba-ob,noPrice,out:modal+ob};
+}
+function summaryHtml(s){const c=v=>v<0?'out':'in';
+  return`<div class="ln"><span>Omzet (kalau semua terjual)</span><b>${rp(s.omzet)}</b></div>
+  <div class="ln"><span>Modal (sudah termasuk biaya & diskon)</span><b>${rp(s.modal)}</b></div>
+  <div class="ln hl"><span>➡️ Laba kotor</span><b class="${c(s.laba)}">${rp(s.laba)}</b></div>
+  ${s.ob?`<div class="ln"><span>Biaya OB ambil barang</span><b class="out">−${rp(s.ob)}</b></div>
+  <div class="ln hl"><span>Laba bersih</span><b class="${c(s.bersih)}">${rp(s.bersih)}</b></div>`:''}
+  ${s.noPrice?`<div class="note" style="margin-top:4px"><span class="badge">${s.noPrice} produk belum ada harga jual</span> omzet belum lengkap</div>`:''}`}
 function costStats(){ // average landed cost per product
   const m={};
   for(const b of S.purchases){
@@ -269,7 +289,8 @@ function ledgerAll(){
   const byDay={};
   for(const s of S.sales){(byDay[s.date]=byDay[s.date]||{amt:0,qty:0});byDay[s.date].amt+=s.qty*s.price;byDay[s.date].qty+=s.qty}
   for(const d in byDay)L.push({date:d,type:'in',cat:'Penjualan',note:byDay[d].qty+' pcs terjual',amt:byDay[d].amt,auto:true});
-  for(const b of S.purchases)L.push({date:b.date,type:'out',cat:'Belanja Shopee',note:b.note||(b.items.length+' produk'),amt:purchaseTotal(b),auto:true});
+  for(const b of S.purchases){L.push({date:b.date,type:'out',cat:'Belanja Shopee',note:b.note||(b.items.length+' produk'),amt:purchaseTotal(b),auto:true});
+    if(+b.ob)L.push({date:b.date,type:'out',cat:'Biaya OB',note:'Ambil barang'+(b.note?' · '+b.note:''),amt:+b.ob,auto:true})}
   for(const c of S.cash)L.push({id:c.id,date:c.date,type:c.type,cat:c.cat,note:c.note,amt:+c.amt});
   L.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.type==='in'?-1:1));
   let bal=0;for(const r of L){bal+=r.type==='in'?r.amt:-r.amt;r.bal=bal}
@@ -304,6 +325,7 @@ function renderDash(){
   const pcs=sales.reduce((x,s)=>x+s.qty,0);
   let hpp=0,noCost=0;for(const s of sales){const c=avgCost(s.pid,cs);if(c==null)noCost+=s.qty;else hpp+=c*s.qty}
   const laba=omzet-hpp;
+  const obCost=S.purchases.filter(p=>inR(p.date)).reduce((x,p)=>x+(+p.ob||0),0);
   const L=ledgerAll();const lr=L.filter(r=>inR(r.date));
   const cin=lr.filter(r=>r.type==='in').reduce((x,r)=>x+r.amt,0),cout=lr.filter(r=>r.type==='out').reduce((x,r)=>x+r.amt,0);
   const saldo=L.length?L[L.length-1].bal:0;
@@ -312,6 +334,7 @@ function renderDash(){
   $('#kpis').innerHTML=[
     ['Omzet',rp(omzet),pcs+' pcs · '+rp(omzet/days)+'/hari'],
     ['Laba kotor',rp(laba),(omzet?Math.round(laba/omzet*100):0)+'% margin'+(noCost?` · <span class="badge">${noCost} pcs tanpa modal</span>`:'')],
+    ['Laba bersih',rp(laba-obCost),'laba kotor − biaya OB '+rp(obCost)],
     ['Kas masuk',`<span class="in">${rp(cin)}</span>`,'penjualan + modal'],
     ['Kas keluar',`<span class="out">${rp(cout)}</span>`,'belanja + biaya'],
     ['Saldo kas sekarang',rp(saldo),'uang di tangan'],
@@ -390,19 +413,22 @@ function addBuyRow(pid,qty='',cost='',newName=''){const tr=document.createElemen
   tr.innerHTML=`<td><select class="bp" style="width:100%" data-new="${esc(newName)}">${prodOptions(pid,newName)}</select></td><td><input type="number" class="bq" min="0" value="${qty}"></td><td><input type="number" class="bc" min="0" value="${cost}"></td><td class="r note bu">-</td><td><button class="btn x" title="Hapus">✕</button></td>`;
   tr.querySelector('.btn').onclick=()=>{tr.remove();calcBuy()};$('#bItems').appendChild(tr);calcBuy()}
 function readBuy(){return[...$('#bItems').children].map(tr=>({pid:tr.querySelector('.bp').value,qty:+tr.querySelector('.bq').value||0,cost:+tr.querySelector('.bc').value||0,tr}))}
-function calcBuy(){const items=readBuy();const b={items,ship:$('#bShip').value,fee:$('#bFee').value,disc:$('#bDisc').value};const sub=items.reduce((a,i)=>a+i.cost,0);const tot=purchaseTotal(b);const f=sub?tot/sub:1;
+function calcBuy(){const items=readBuy();const b={items,ship:$('#bShip').value,fee:$('#bFee').value,disc:$('#bDisc').value,ob:$('#bOb').value};const sub=items.reduce((a,i)=>a+i.cost,0);const tot=purchaseTotal(b);const f=sub?tot/sub:1;
   for(const i of items){const u=i.qty?i.cost*f/i.qty:0;const pr=prod(i.pid).price;i.tr.querySelector('.bu').innerHTML=i.qty&&i.cost?`${rp(u)}<div style="font-size:11px" class="${pr>u?'in':'out'}">untung ${rp(pr-u)}</div><div style="font-size:11px" class="muted">saran ${rp(suggestPrice(u))}</div>`:'-'}
-  $('#bTotal').textContent=rp(tot)}
-$('#bItems').addEventListener('input',calcBuy);['#bShip','#bFee','#bDisc'].forEach(s=>$(s).oninput=calcBuy);
+  const sm=purchaseSummary(b);$('#bSum').innerHTML=items.some(i=>i.qty&&i.cost)?summaryHtml(sm):'';
+  $('#bTotal').textContent=rp(sm.out)+(sm.ob?` (Shopee ${rp(tot)} + OB ${rp(sm.ob)})`:'')}
+$('#bItems').addEventListener('input',calcBuy);$('#bItems').addEventListener('change',calcBuy);['#bShip','#bFee','#bDisc','#bOb'].forEach(s=>$(s).oninput=calcBuy);
 $('#bAdd').onclick=()=>addBuyRow();
 $('#bSave').onclick=()=>{const rows=readBuy().filter(i=>i.qty>0);if(!rows.length)return toast('Isi minimal satu produk dengan qty');
   const made={};for(const r of rows)if(r.pid==='new'){const n=r.tr.querySelector('.bp').dataset.new;const ex=S.products.find(p=>p.name.toLowerCase()===n.toLowerCase());
     r.pid=ex?ex.id:(made[n]||(made[n]=uid(),S.products.push({id:made[n],name:n,price:0,active:true}),made[n]))}
   const items=rows.map(({pid,qty,cost})=>({pid,qty,cost}));if(Object.keys(made).length)setTimeout(()=>toast('Produk baru dibuat — isi harga jualnya di Produk & Stok'),1900);
-  S.purchases.push({id:uid(),date:$('#bDate').value||today(),note:$('#bNote').value.trim(),items,ship:+$('#bShip').value||0,fee:+$('#bFee').value||0,disc:+$('#bDisc').value||0});
-  $('#bItems').innerHTML='';$('#bNote').value='';['#bShip','#bFee','#bDisc'].forEach(s=>$(s).value=0);addBuyRow();save();toast('Belanja tersimpan, stok bertambah')};
+  S.purchases.push({id:uid(),date:$('#bDate').value||today(),note:$('#bNote').value.trim(),items,ship:+$('#bShip').value||0,fee:+$('#bFee').value||0,disc:+$('#bDisc').value||0,ob:+$('#bOb').value||0});
+  $('#bItems').innerHTML='';$('#bNote').value='';['#bShip','#bFee','#bDisc','#bOb'].forEach(s=>$(s).value=0);addBuyRow();save();toast('Belanja tersimpan, stok bertambah')};
 function renderBeli(){const list=[...S.purchases].sort((a,b)=>b.date.localeCompare(a.date));
-  $('#buyList').innerHTML=list.length?`<table><tr><th>Tanggal</th><th>Isi</th><th class="r">Total</th><th></th></tr>${list.map(b=>`<tr><td><b>${fmtDate(b.date)}</b>${b.note?`<div class="note">${esc(b.note)}</div>`:''}</td><td class="note">${b.items.map(i=>esc(prod(i.pid).name)+' ×'+i.qty).join(', ')}</td><td class="r">${rp(purchaseTotal(b))}</td><td class="r"><button class="btn x" data-del-buy="${b.id}">✕</button></td></tr>`).join('')}</table>`:'<div class="empty">Belum ada belanja</div>'}
+  const c=v=>v<0?'out':'in';
+  $('#buyList').innerHTML=list.length?`<table><tr><th>Tanggal</th><th>Isi</th><th class="r">Modal</th><th class="r">Omzet</th><th class="r">Laba kotor</th><th class="r">Biaya OB</th><th class="r">Laba bersih</th><th></th></tr>${list.map(b=>{const s=purchaseSummary(b);
+    return`<tr><td><b>${fmtDate(b.date)}</b>${b.note?`<div class="note">${esc(b.note)}</div>`:''}</td><td class="note">${b.items.map(i=>esc(prod(i.pid).name)+' ×'+i.qty).join(', ')}</td><td class="r">${rp(s.modal)}</td><td class="r">${rp(s.omzet)}${s.noPrice?`<div><span class="badge">${s.noPrice} tanpa harga</span></div>`:''}</td><td class="r ${c(s.laba)}">${rp(s.laba)}</td><td class="r">${s.ob?rp(s.ob):'-'}</td><td class="r ${c(s.bersih)}"><b>${rp(s.bersih)}</b></td><td class="r"><button class="btn x" data-del-buy="${b.id}">✕</button></td></tr>`}).join('')}</table><p class="note">Omzet & laba = perkiraan kalau semua barang terjual dengan harga jual sekarang.</p>`:'<div class="empty">Belum ada belanja</div>'}
 $('#buyList').onclick=e=>{const id=e.target.dataset.delBuy;if(id&&confirm('Hapus catatan belanja ini? Stok akan berkurang.')){tomb(id);S.purchases=S.purchases.filter(b=>b.id!==id);save()}};
 
 /* ---------- kas ---------- */
@@ -446,7 +472,7 @@ function cleanName(name){return name.replace(/\(.*?\)/g,' ').replace(/\s-\s.*$/,
 function matchProduct(text){const have=new Set(toks(text));let best=null,score=0;
   for(const p of S.products){const t=toks(p.name);if(!t.length)continue;const sc=t.filter(w=>have.has(w)).length/t.length;if(sc>score){score=sc;best=p}}
   return score>=0.5?best:null}
-function parseShopee(txt){const o={items:[],fee:0,disc:0,ship:0,extra:[]};let m;
+function parseShopee(txt){const o={items:[],fee:0,disc:0,ship:0,ob:0,extra:[]};let m;
   if(m=txt.match(/Tanggal[^:\n]*:\s*(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/i))o.date=m[3]+'-'+pad(+m[2])+'-'+pad(+m[1]);
   for(const line of txt.split(/\n/)){const l=line.trim();if(!l)continue;
     if(m=l.match(/^\d+\.\s*(.+?)\s*\|\s*Variasi:\s*(.*?)\s*\|.*?Kuantitas:\s*(\d+)\s*\|\s*Subtotal:\s*Rp\s*([\d.,]+)/i)){
@@ -455,16 +481,17 @@ function parseShopee(txt){const o={items:[],fee:0,disc:0,ship:0,extra:[]};let m;
     if(m=l.match(/(?:ongkir|ongkos kirim|pengiriman)[^:]*:\s*(-?)Rp\s*([\d.,]+)/i)){o.ship+=(m[1]?-1:1)*num(m[2]);continue}
     if(m=l.match(/(?:diskon|voucher|potongan|cashback|koin)[^:]*:\s*-?\s*Rp\s*([\d.,]+)/i)){o.disc+=num(m[1]);continue}
     if(m=l.match(/biaya[^:]*:\s*Rp\s*([\d.,]+)/i)){o.fee+=num(m[1]);continue}
-    if(m=l.match(/(?:\bob\b|ambil paket|kurir|antar)\D*([\d.,]+)/i)){o.ship+=num(m[1]);o.extra.push(l+'');o.extraAmt=(o.extraAmt||0)+num(m[1]);continue}
+    if(m=l.match(/(?:\bob\b|ambil paket|kurir|antar)\D*([\d.,]+)/i)){o.ob+=num(m[1]);o.extra.push(l);continue}
   }
   return o}
 $('#bParse').onclick=()=>{const o=parseShopee($('#bPaste').value);if(!o.items.length)return toast('Tidak ada baris produk yang terbaca');
   $('#bItems').innerHTML='';let baru=0;
   for(const it of o.items){const p=matchProduct(it.name+' '+it.v);if(p)addBuyRow(p.id,it.qty,it.cost);else{baru++;addBuyRow('new',it.qty,it.cost,cleanName(it.name))}}
-  if(o.date)$('#bDate').value=o.date;$('#bShip').value=o.ship;$('#bFee').value=o.fee;$('#bDisc').value=o.disc;
+  if(o.date)$('#bDate').value=o.date;$('#bShip').value=o.ship;$('#bFee').value=o.fee;$('#bDisc').value=o.disc;$('#bOb').value=o.ob;
   if(o.extra.length&&!$('#bNote').value)$('#bNote').value=o.extra.join('; ');calcBuy();
   const sub=o.items.reduce((a,i)=>a+i.cost,0),tot=sub+o.ship+o.fee-o.disc;let msg=`${o.items.length} baris terbaca, total ${rp(tot)}.`;
-  if(o.paid!=null){const exp=o.paid+(o.extraAmt||0);msg+=exp===tot?' Cocok dengan Total Pembayaran'+(o.extraAmt?' + biaya ambil paket':'')+' ✔':` ⚠ Beda dengan Total Pembayaran${o.extraAmt?' + biaya ambil paket':''} (${rp(exp)}), cek lagi.`}
+  if(o.paid!=null)msg+=o.paid===tot?' Cocok dengan Total Pembayaran ✔':` ⚠ Beda dengan Total Pembayaran (${rp(o.paid)}), cek lagi.`;
+  if(o.ob)msg+=` Biaya OB ${rp(o.ob)} dicatat terpisah (tidak masuk modal).`;
   if(baru)msg+=` ${baru} baris belum cocok dengan produk yang ada → akan dibuat produk baru (atau pilih produk lain).`;
   $('#bParseMsg').textContent=msg;toast('Form belanja terisi, cek lalu Simpan')};
 
