@@ -1,4 +1,4 @@
-// API sinkron data Warung Kantor (Vercel Serverless Function).
+// API sinkron data WartungKit (Vercel Serverless Function).
 // Menyimpan seluruh data sebagai satu dokumen JSON di Upstash Redis (gratis via Vercel Marketplace).
 // Env yang dibutuhkan:
 //   KV_REST_API_URL / KV_REST_API_TOKEN   (otomatis diisi integrasi Upstash di Vercel)
